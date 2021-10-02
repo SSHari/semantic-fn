@@ -1,0 +1,34 @@
+{
+  "name": "semantic-fn",
+  "version": "1.0.0",
+  "description": "Convert human readable text to executable JS",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm-run-all --parallel build:app build:types",
+    "build:app": "rollup -c",
+    "build:types": "tsc -p tsconfig.build.json",
+    "format:files": "prettier --ignore-path .gitignore .",
+    "format:check": "npm run format:files -- --check",
+    "format": "npm run format:files -- --write",
+    "lint": "eslint .",
+    "test": "jest",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "validate": "npm-run-all --parallel format:check lint test typecheck"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SSHari/semantic-fn.git"
+  },
+  "author": "Sai Hari",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SSHari/semantic-fn/issues"
+  },
+  "homepage": "https://github.com/SSHari/semantic-fn#readme",
+  "devDependencies": {
+    "ssh-dev-scripts": "^1.0.1"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.15.4"
+  }
+}
