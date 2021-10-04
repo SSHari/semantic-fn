@@ -2,8 +2,6 @@ const TokenStrings = [
   // Single character tokens
   'LEFT_PAREN',
   'RIGHT_PAREN',
-  'LEFT_BRACE',
-  'RIGHT_BRACE',
   'MINUS',
   'PLUS',
   'SLASH',
@@ -25,9 +23,8 @@ const TokenStrings = [
   'STRING',
   'NUMBER',
 
-  // Conversion
-  'TO_STRING',
-  'TO_BOOL',
+  // Modifiers (e.g. toString, toBool)
+  'MODIFIER',
 
   // Keywords
   'AND',
@@ -36,6 +33,9 @@ const TokenStrings = [
   'FALSE',
   'NULL',
   'UNDEFINED',
+
+  // End of string
+  'EOT',
 ] as const;
 
 export type TokenString = typeof TokenStrings[number];
@@ -50,6 +50,8 @@ export const KeyWords = new Map([
   ['false', 'FALSE'],
   ['null', 'NULL'],
   ['undefined', 'UNDEFINED'],
-  ['toString', 'TO_STRING'],
-  ['toBool', 'TO_BOOL'],
+  ['toString', 'MODIFIER'],
+  ['toBool', 'MODIFIER'],
 ]);
+
+export type Token = { type: TokenString; lexeme?: string; literal?: any; line: number };

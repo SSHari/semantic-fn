@@ -1,6 +1,4 @@
-import { KeyWords, TokenType, TokenString } from './tokens';
-
-type Token = { type: string; lexeme?: string; literal?: any; line: number };
+import { KeyWords, Token, TokenType, TokenString } from './tokens';
 
 export function scanner(source: string) {
   const tokens: Token[] = [];
@@ -9,7 +7,7 @@ export function scanner(source: string) {
   let line = 1;
 
   // Add a new token
-  function addToken(type: string, literal?: any) {
+  function addToken(type: TokenString, literal?: any) {
     const text = source.substring(start, current);
     tokens.push({ type, lexeme: text, literal, line });
   }
@@ -100,7 +98,9 @@ export function scanner(source: string) {
     const text = source.substring(start, current);
     const accessorParts = text.split('.');
 
-    if (KeyWords.has(text)) {
+    if (KeyWords.has(text) && KeyWords.get(text) === 'MODIFIER') {
+      addToken(TokenType[KeyWords.get(text) as TokenString], text);
+    } else if (KeyWords.has(text)) {
       addToken(TokenType[KeyWords.get(text) as TokenString]);
     } else if (accessorParts.length > 1) {
       addToken(TokenType.ACCESSOR, accessorParts);
@@ -118,12 +118,6 @@ export function scanner(source: string) {
         break;
       case ')':
         addToken(TokenType.RIGHT_PAREN);
-        break;
-      case '{':
-        addToken(TokenType.LEFT_BRACE);
-        break;
-      case '}':
-        addToken(TokenType.RIGHT_BRACE);
         break;
       case '-':
         addToken(TokenType.MINUS);
@@ -182,6 +176,8 @@ export function scanner(source: string) {
       start = current;
       scanToken();
     }
+
+    tokens.push({ type: TokenType.EOT, line });
 
     return tokens;
   }

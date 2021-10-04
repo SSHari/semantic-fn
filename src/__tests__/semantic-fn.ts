@@ -1,6 +1,8 @@
 import { normalizer } from '../normalizer';
 import { scanner } from '../scanner';
+import { parser } from '../parser';
 import { TokenString } from '../tokens';
+import { Expr } from '../expressions';
 
 it.each`
   source                                                                     | normalizedSource
@@ -22,17 +24,17 @@ it.each`
 });
 
 it('should scan the source and return a list of tokens correctly', () => {
-  function buildTokenObj(type: TokenString, lexeme: string, literal?: any, line: number = expect.any(Number)) {
+  function buildTokenObj(type: TokenString, lexeme?: string, literal?: any, line: number = expect.any(Number)) {
     return { type, lexeme, literal, line };
   }
 
   const tokensOne = scanner('person.age === toString 5 + 2 + 3 or person.name.length > 7 and person.name !== "Jack"');
 
-  expect(tokensOne).toHaveLength(16);
+  expect(tokensOne).toHaveLength(17);
   expect(tokensOne).toEqual([
     buildTokenObj('ACCESSOR', 'person.age', ['person', 'age']),
     buildTokenObj('EQUAL_EQUAL', '==='),
-    buildTokenObj('TO_STRING', 'toString'),
+    buildTokenObj('MODIFIER', 'toString', 'toString'),
     buildTokenObj('NUMBER', '5', 5),
     buildTokenObj('PLUS', '+'),
     buildTokenObj('NUMBER', '2', 2),
@@ -46,6 +48,7 @@ it('should scan the source and return a list of tokens correctly', () => {
     buildTokenObj('ACCESSOR', 'person.name', ['person', 'name']),
     buildTokenObj('BANG_EQUAL_EQUAL', '!=='),
     buildTokenObj('STRING', '"Jack"', 'Jack'),
+    buildTokenObj('EOT'),
   ]);
 
   const tokensTwo = scanner(`
@@ -54,7 +57,7 @@ it('should scan the source and return a list of tokens correctly', () => {
     toBool undefined
   `);
 
-  expect(tokensTwo).toHaveLength(14);
+  expect(tokensTwo).toHaveLength(15);
   expect(tokensTwo).toEqual([
     buildTokenObj('LEFT_PAREN', '(', undefined, 2),
     buildTokenObj('NUMBER', '1', 1, 2),
@@ -68,7 +71,32 @@ it('should scan the source and return a list of tokens correctly', () => {
     buildTokenObj('SLASH', '/', undefined, 2),
     buildTokenObj('NUMBER', '2', 2, 2),
     buildTokenObj('OR', 'or', undefined, 3),
-    buildTokenObj('TO_BOOL', 'toBool', undefined, 4),
+    buildTokenObj('MODIFIER', 'toBool', 'toBool', 4),
     buildTokenObj('UNDEFINED', 'undefined', undefined, 4),
+    buildTokenObj('EOT'),
   ]);
+});
+
+it('should scan a list of tokens and return a syntax tree correctly', () => {
+  function buildExprObj(expression: Partial<Expr>) {
+    return expect.objectContaining({ ...expression });
+  }
+
+  // TODO: This is passing, but it's wrong because we haven't implemented or / and
+  const tokensOne = scanner('person.age > 20 or person.name.length > 7');
+  const syntaxTreeOne = parser(tokensOne);
+
+  expect(syntaxTreeOne).toEqual(
+    buildExprObj({
+      type: 'Binary',
+      left: buildExprObj({ type: 'Literal' }),
+      operator: { type: 'GREATER', line: 1, lexeme: '>' },
+      right: buildExprObj({ type: 'Literal' }),
+    }),
+  );
+
+  /*
+  const tokensTwo = scanner('person.age === toString 5 + 2 + 3 or person.name.length > 7 and person.name !== "Jack"');
+  const syntaxTreeTwo = parser(tokensTwo);
+  */
 });
