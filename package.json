@@ -1,6 +1,6 @@
 {
   "name": "semantic-fn",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Convert human readable text to executable JS",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
