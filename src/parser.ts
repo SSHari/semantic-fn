@@ -76,7 +76,7 @@ export function parser(tokens: Token[]) {
   }
 
   function unary(): Expr {
-    if (match(TokenType.BANG, TokenType.MINUS)) {
+    if (match(TokenType.BANG, TokenType.MINUS, TokenType.MODIFIER)) {
       const operator = previous();
       const right = unary();
       return createUnary(operator, right);

@@ -1,102 +1,18 @@
-import { normalizer } from '../normalizer';
-import { scanner } from '../scanner';
-import { parser } from '../parser';
-import { TokenString } from '../tokens';
-import { Expr } from '../expressions';
+import { buildSemanticFn } from '../semantic-fn';
 
 it.each`
-  source                                                                     | normalizedSource
-  ${'1 equal to 2'}                                                          | ${'1 === 2'}
-  ${'1 not equal to 2'}                                                      | ${'1 !== 2'}
-  ${'1 less than 2'}                                                         | ${'1 < 2'}
-  ${'1 greater than 2'}                                                      | ${'1 > 2'}
-  ${'1 less than or equal to 2'}                                             | ${'1 <= 2'}
-  ${'1 greater than or equal to 2'}                                          | ${'1 >= 2'}
-  ${'the string 1'}                                                          | ${'toString 1'}
-  ${'the boolean 1'}                                                         | ${'toBool 1'}
-  ${'1 plus 1'}                                                              | ${'1 + 1'}
-  ${'1 minus 1'}                                                             | ${'1 - 1'}
-  ${'1 multiply 1'}                                                          | ${'1 * 1'}
-  ${'1 divide 1'}                                                            | ${'1 / 1'}
-  ${'person.age equal to the string 5 or person.name.length greater than 7'} | ${'person.age === toString 5 or person.name.length > 7'}
-`('should normalize `$source`', ({ source, normalizedSource }) => {
-  expect(normalizer(source)).toEqual(normalizedSource);
-});
-
-it('should scan the source and return a list of tokens correctly', () => {
-  function buildTokenObj(type: TokenString, lexeme?: string, literal?: any, line: number = expect.any(Number)) {
-    return { type, lexeme, literal, line };
-  }
-
-  const tokensOne = scanner('person.age === toString 5 + 2 + 3 or person.name.length > 7 and person.name !== "Jack"');
-
-  expect(tokensOne).toHaveLength(17);
-  expect(tokensOne).toEqual([
-    buildTokenObj('ACCESSOR', 'person.age', ['person', 'age']),
-    buildTokenObj('EQUAL_EQUAL', '==='),
-    buildTokenObj('MODIFIER', 'toString', 'toString'),
-    buildTokenObj('NUMBER', '5', 5),
-    buildTokenObj('PLUS', '+'),
-    buildTokenObj('NUMBER', '2', 2),
-    buildTokenObj('PLUS', '+'),
-    buildTokenObj('NUMBER', '3', 3),
-    buildTokenObj('OR', 'or'),
-    buildTokenObj('ACCESSOR', 'person.name.length', ['person', 'name', 'length']),
-    buildTokenObj('GREATER', '>'),
-    buildTokenObj('NUMBER', '7', 7),
-    buildTokenObj('AND', 'and'),
-    buildTokenObj('ACCESSOR', 'person.name', ['person', 'name']),
-    buildTokenObj('BANG_EQUAL_EQUAL', '!=='),
-    buildTokenObj('STRING', '"Jack"', 'Jack'),
-    buildTokenObj('EOT'),
-  ]);
-
-  const tokensTwo = scanner(`
-    (1 - 2 * 3) >= 4 / 2
-    or
-    toBool undefined
-  `);
-
-  expect(tokensTwo).toHaveLength(15);
-  expect(tokensTwo).toEqual([
-    buildTokenObj('LEFT_PAREN', '(', undefined, 2),
-    buildTokenObj('NUMBER', '1', 1, 2),
-    buildTokenObj('MINUS', '-', undefined, 2),
-    buildTokenObj('NUMBER', '2', 2, 2),
-    buildTokenObj('STAR', '*', undefined, 2),
-    buildTokenObj('NUMBER', '3', 3, 2),
-    buildTokenObj('RIGHT_PAREN', ')', undefined, 2),
-    buildTokenObj('GREATER_EQUAL', '>=', undefined, 2),
-    buildTokenObj('NUMBER', '4', 4, 2),
-    buildTokenObj('SLASH', '/', undefined, 2),
-    buildTokenObj('NUMBER', '2', 2, 2),
-    buildTokenObj('OR', 'or', undefined, 3),
-    buildTokenObj('MODIFIER', 'toBool', 'toBool', 4),
-    buildTokenObj('UNDEFINED', 'undefined', undefined, 4),
-    buildTokenObj('EOT'),
-  ]);
-});
-
-it('should scan a list of tokens and return a syntax tree correctly', () => {
-  function buildExprObj(expression: Partial<Expr>) {
-    return expect.objectContaining({ ...expression });
-  }
-
-  // TODO: This is passing, but it's wrong because we haven't implemented or / and
-  const tokensOne = scanner('person.age > 20 or person.name.length > 7');
-  const syntaxTreeOne = parser(tokensOne);
-
-  expect(syntaxTreeOne).toEqual(
-    buildExprObj({
-      type: 'Binary',
-      left: buildExprObj({ type: 'Literal' }),
-      operator: { type: 'GREATER', line: 1, lexeme: '>' },
-      right: buildExprObj({ type: 'Literal' }),
-    }),
-  );
-
-  /*
-  const tokensTwo = scanner('person.age === toString 5 + 2 + 3 or person.name.length > 7 and person.name !== "Jack"');
-  const syntaxTreeTwo = parser(tokensTwo);
-  */
+  descriptor                | args                          | options                             | expected
+  ${'1 + 5 === 6'}          | ${[]}                         | ${{}}                               | ${true}
+  ${'10 + 10 * 2'}          | ${[]}                         | ${{}}                               | ${30}
+  ${'10 - 5 - 3'}           | ${[]}                         | ${{}}                               | ${2}
+  ${'person.age > 20'}      | ${[{ age: 21 }]}              | ${{ argNames: ['person'] }}         | ${true}
+  ${'person.age + 20'}      | ${[{ age: 20 }]}              | ${{ argNames: ['person'] }}         | ${40}
+  ${'toBool 0'}             | ${[]}                         | ${{ argNames: [] }}                 | ${false}
+  ${'toString person.age'}  | ${[{ age: 20 }]}              | ${{ argNames: ['person'] }}         | ${'20'}
+  ${'name === "Jack"'}      | ${['Jack']}                   | ${{ argNames: ['name'] }}           | ${true}
+  ${'age == "20"'}          | ${[20]}                       | ${{ argNames: ['age'] }}            | ${true}
+  ${'person.name === name'} | ${[{ name: 'Jack' }, 'Jack']} | ${{ argNames: ['person', 'name'] }} | ${true}
+`('should return a function that evaluates `$descriptor` correctly', ({ descriptor, args, options, expected }) => {
+  const fn = buildSemanticFn(descriptor, options);
+  expect(fn(...args)).toBe(expected);
 });

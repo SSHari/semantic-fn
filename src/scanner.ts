@@ -1,6 +1,6 @@
 import { KeyWords, Token, TokenType, TokenString } from './tokens';
 
-export function scanner(source: string) {
+export function scanner(source: string, argMap: Record<string, any>) {
   const tokens: Token[] = [];
   let start = 0;
   let current = 0;
@@ -93,7 +93,7 @@ export function scanner(source: string) {
   }
 
   function identifier() {
-    while (!isWhiteSpace(peek())) advance();
+    while (!isWhiteSpace(peek()) && !isAtEnd()) advance();
 
     const text = source.substring(start, current);
     const accessorParts = text.split('.');
@@ -102,7 +102,9 @@ export function scanner(source: string) {
       addToken(TokenType[KeyWords.get(text) as TokenString], text);
     } else if (KeyWords.has(text)) {
       addToken(TokenType[KeyWords.get(text) as TokenString]);
-    } else if (accessorParts.length > 1) {
+    } else if (typeof argMap[accessorParts[0]] === 'number') {
+      // Verify that the accessor starts
+      // with one of the defined arg names
       addToken(TokenType.ACCESSOR, accessorParts);
     } else {
       console.log('This is an identifier error');
