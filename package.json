@@ -2,7 +2,15 @@
   "name": "semantic-fn",
   "version": "1.0.0",
   "description": "Convert human readable text to executable JS",
-  "main": "index.js",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "typings": "dist/types/semantic-fn.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "tag": "latest"
+  },
   "scripts": {
     "build": "npm-run-all --parallel build:app build:types",
     "build:app": "rollup -c",
