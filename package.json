@@ -19,6 +19,7 @@
     "format:check": "npm run format:files -- --check",
     "format": "npm run format:files -- --write",
     "lint": "eslint .",
+    "prepare": "husky install",
     "test": "jest",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "validate": "npm-run-all --parallel format:check lint test typecheck"
@@ -34,9 +35,19 @@
   },
   "homepage": "https://github.com/SSHari/semantic-fn#readme",
   "devDependencies": {
-    "ssh-dev-scripts": "^1.0.1"
+    "ssh-dev-scripts": "^1.1.0"
   },
   "dependencies": {
     "@babel/runtime": "^7.15.4"
-  }
+  },
+  "keywords": [
+    "js",
+    "javascript",
+    "semantic",
+    "fn",
+    "function",
+    "context-free grammar",
+    "scanner",
+    "parser"
+  ]
 }
