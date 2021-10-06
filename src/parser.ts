@@ -1,10 +1,12 @@
-import { Expr, createBinary, createGrouping, createLiteral, createUnary } from './expressions';
-import { Stmt, createExprStmt } from './statements';
+import { Expr, createAssignment, createBinary, createGrouping, createLiteral, createUnary, createVariable } from './expressions';
+import { Stmt, LetDecl, createBlock, createExprStmt, createLetDecl } from './statements';
 import { Token, TokenString, TokenType } from './tokens';
 import { CaptureError } from './errors';
 
 const {
   // Single character tokens
+  LEFT_BRACE,
+  RIGHT_BRACE,
   LEFT_PAREN,
   RIGHT_PAREN,
   MINUS,
@@ -16,6 +18,7 @@ const {
   BANG,
   BANG_EQUAL,
   BANG_EQUAL_EQUAL,
+  EQUAL,
   EQUAL_EQUAL,
   EQUAL_EQUAL_EQUAL,
   GREATER,
@@ -36,6 +39,7 @@ const {
   FALSE,
   NULL,
   UNDEFINED,
+  LET,
 
   // Statement separator
   NEW_LINE,
@@ -81,15 +85,21 @@ export function parser(tokens: Token[], captureError: CaptureError) {
     return false;
   }
 
+  function error(token: Token, errorMessage: string) {
+    captureError(token.line, errorMessage, token.lexeme);
+    throw new Error(errorMessage);
+  }
+
   function consume(type: TokenString, errorMessage: string) {
     if (check(type)) return advance();
-    captureError(peek().line, errorMessage, peek().lexeme ?? '');
+    captureError(peek().line, errorMessage, peek().lexeme);
     throw new Error(errorMessage);
   }
 
   function synchronize() {
     // TODO: Make this a bit more robust
-    advance();
+    // Skip over new lines which aren't part of a statement
+    while (peek().type === NEW_LINE) advance();
   }
 
   // Create Binary Operator Builder
@@ -109,9 +119,11 @@ export function parser(tokens: Token[], captureError: CaptureError) {
 
   // Expression Grammar Symbol Builders
   function primary() {
-    if (match(FALSE, TRUE, NULL, UNDEFINED, NUMBER, STRING, IDENTIFIER)) {
+    if (match(FALSE, TRUE, NULL, UNDEFINED, NUMBER, STRING)) {
       return createLiteral(previous());
     }
+
+    if (match(IDENTIFIER)) return createVariable(previous());
 
     if (match(LEFT_PAREN)) {
       const expr = expression();
@@ -137,28 +149,83 @@ export function parser(tokens: Token[], captureError: CaptureError) {
   const comparison = buildBinaryOperatorFn([GREATER, GREATER_EQUAL, LESS, LESS_EQUAL], term);
   const equality = buildBinaryOperatorFn([BANG_EQUAL, BANG_EQUAL_EQUAL, EQUAL_EQUAL, EQUAL_EQUAL_EQUAL], comparison);
 
+  function assignment(): Expr {
+    const expr = equality();
+
+    if (match(EQUAL)) {
+      const equals = previous();
+      const value = assignment();
+
+      if (expr.type === 'Variable') {
+        const name = expr.name;
+        return createAssignment(name, value);
+      }
+
+      error(equals, 'Invalid assignment target.');
+    }
+
+    return expr;
+  }
+
   function expression() {
-    return equality();
+    return assignment();
   }
 
   // Statement Grammar Symbol Builders
+  function expressionStatement() {
+    const expr = expression();
+    !isAtEnd() && consume(NEW_LINE, 'Expect a `\n` after an expression.');
+    return createExprStmt(expr);
+  }
+
+  function block() {
+    const statements: Stmt[] = [];
+
+    while (!check(RIGHT_BRACE) && !isAtEnd()) {
+      const statement = declaration();
+      if (statement) statements.push(statement);
+    }
+
+    consume(RIGHT_BRACE, 'Expect `}` after block.');
+    return statements;
+  }
+
   function statement() {
+    if (match(LEFT_BRACE)) return createBlock(block());
     return expressionStatement();
   }
 
-  function expressionStatement() {
-    const expr = expression();
-    !isAtEnd() && consume(NEW_LINE, 'Expect a \\n after an expression.');
-    return createExprStmt(expr);
+  function letDeclaration() {
+    const name = consume(IDENTIFIER, 'Expect a variable name.');
+
+    let initializer: LetDecl['initializer'];
+    if (match(EQUAL)) {
+      initializer = expression();
+    }
+
+    consume(NEW_LINE, 'Expect a `\n` after a variable declaration.');
+    return createLetDecl(name, initializer);
+  }
+
+  function declaration() {
+    try {
+      if (match(LET)) return letDeclaration();
+
+      return statement();
+    } catch (error) {
+      // If there's an error in the statement then skip to the next logical point
+      synchronize();
+      return null;
+    }
   }
 
   function parse() {
     const statements: Stmt[] = [];
 
     while (!isAtEnd()) {
-      // Skip over new lines which aren't part of a statement
-      while (peek().type === NEW_LINE) advance();
-      statements.push(statement());
+      // Skip adding the statement if there was an error
+      const statement = declaration();
+      if (statement) statements.push(statement);
     }
 
     return statements;

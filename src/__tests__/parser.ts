@@ -23,7 +23,7 @@ it('should scan a list of tokens and return a syntax tree correctly', () => {
       type: 'ExprStmt',
       expr: buildExprObj({
         type: 'Binary',
-        left: buildExprObj({ type: 'Literal', token: expect.objectContaining({ lexeme: 'age' }) }),
+        left: buildExprObj({ type: 'Variable', name: expect.objectContaining({ lexeme: 'age' }) }),
         operator: { type: 'GREATER', line: 1, lexeme: '>' },
         right: buildExprObj({ type: 'Literal', token: expect.objectContaining({ lexeme: '20', literal: 20 }) }),
       }),

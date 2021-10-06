@@ -1,18 +1,26 @@
-import { Binary, Grouping, Literal, Unary, Expr } from './expressions';
-import { ExprStmt, Stmt } from './statements';
+import { Assignment, Binary, Grouping, Literal, Unary, Variable, Expr } from './expressions';
+import { Block, ExprStmt, LetDecl, Stmt } from './statements';
 
 type Evaluate = (expr: Expr) => any;
+type Execute = (stmt: Stmt) => any;
+
 export type TreeWalkerFnMap = {
+  Assignment: (expr: Assignment, evaluate: Evaluate) => any;
   Binary: (expr: Binary, evaluate: Evaluate) => any;
   Grouping: (expr: Grouping, evaluate: Evaluate) => any;
   Literal: (expr: Literal, evaluate: Evaluate) => any;
   Unary: (expr: Unary, evaluate: Evaluate) => any;
-  ExprStmt: (expr: Expr, evaluate: Evaluate) => any;
+  Variable: (expr: Variable, evaluate: Evaluate) => any;
+  Block: (stmt: Block, execute: Execute) => any;
+  ExprStmt: (stmt: ExprStmt, evaluate: Evaluate) => any;
+  LetDecl: (stmt: LetDecl, evaluate: Evaluate) => any;
 };
 
-export function walkTree({ Binary, Grouping, Literal, Unary, ExprStmt }: TreeWalkerFnMap, statements: Stmt[]) {
+export function walkTree({ Assignment, Binary, Grouping, Literal, Unary, Variable, Block, ExprStmt, LetDecl }: TreeWalkerFnMap, statements: Stmt[]) {
   function evaluate(expr: Expr) {
     switch (expr.type) {
+      case 'Assignment':
+        return Assignment(expr, evaluate);
       case 'Binary':
         return Binary(expr, evaluate);
       case 'Grouping':
@@ -21,6 +29,8 @@ export function walkTree({ Binary, Grouping, Literal, Unary, ExprStmt }: TreeWal
         return Literal(expr, evaluate);
       case 'Unary':
         return Unary(expr, evaluate);
+      case 'Variable':
+        return Variable(expr, evaluate);
       default:
         // TODO: Handle this correctly
         // @ts-ignore
@@ -30,8 +40,12 @@ export function walkTree({ Binary, Grouping, Literal, Unary, ExprStmt }: TreeWal
 
   function execute(stmt: Stmt) {
     switch (stmt.type) {
+      case 'Block':
+        return Block(stmt, execute);
       case 'ExprStmt':
-        return ExprStmt(stmt.expr, evaluate);
+        return ExprStmt(stmt, evaluate);
+      case 'LetDecl':
+        return LetDecl(stmt, evaluate);
       default:
         // TODO: Handle this correctly
         // @ts-ignore

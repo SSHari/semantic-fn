@@ -25,5 +25,5 @@ export function normalizer(source: string) {
     return replacement;
   };
 
-  return source.toLowerCase().replace(normalizerRegExp, replacer);
+  return source.replace(normalizerRegExp, replacer);
 }

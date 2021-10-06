@@ -41,6 +41,7 @@ const TokenStrings = [
   'FALSE',
   'NULL',
   'UNDEFINED',
+  'LET',
 
   // Statement separator
   'NEW_LINE',
@@ -61,8 +62,9 @@ export const KeyWords: Map<string, TokenString> = new Map([
   ['false', 'FALSE'],
   ['null', 'NULL'],
   ['undefined', 'UNDEFINED'],
+  ['let', 'LET'],
   ['toString', 'MODIFIER'],
   ['toBool', 'MODIFIER'],
 ]);
 
-export type Token = { type: TokenString; lexeme?: string; literal?: any; line: number };
+export type Token = { type: TokenString; lexeme: string; literal?: any; line: number };

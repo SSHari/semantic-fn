@@ -231,7 +231,7 @@ export function scanner(source: string, captureError: CaptureError) {
       scanToken();
     }
 
-    tokens.push({ type: EOT, line });
+    tokens.push({ type: EOT, lexeme: EOT, line });
 
     return tokens;
   }

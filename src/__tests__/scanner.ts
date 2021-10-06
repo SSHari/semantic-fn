@@ -39,7 +39,7 @@ it('should scan the source and return a list of tokens correctly', () => {
     buildTokenObj('IDENTIFIER', 'name'),
     buildTokenObj('BANG_EQUAL_EQUAL', '!=='),
     buildTokenObj('STRING', '"Jack"', 'Jack'),
-    buildTokenObj('EOT'),
+    buildTokenObj('EOT', 'EOT'),
   ]);
 
   const tokensTwo = scanner(
@@ -71,7 +71,7 @@ it('should scan the source and return a list of tokens correctly', () => {
     buildTokenObj('MODIFIER', 'toBool', undefined, 4),
     buildTokenObj('UNDEFINED', 'undefined', undefined, 4),
     buildTokenObj('NEW_LINE', '\n', undefined, 4),
-    buildTokenObj('EOT'),
+    buildTokenObj('EOT', 'EOT'),
   ]);
 });
 

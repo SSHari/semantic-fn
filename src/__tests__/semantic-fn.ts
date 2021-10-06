@@ -21,14 +21,43 @@ it.each`
   expect(fn(...args)).toBe(expected);
 });
 
-it('should return the last statement of a multi-line descriptor', () => {
+it('should handle variables correctly and return the last statement of a multi-line descriptor', () => {
   const fn = buildSemanticFn(
     `
-    1 + 2
-    2 + 3
-    100
+    let a = 1 + 2
+    let b = 2 + 3
+    b = 1
+    a + b
     `,
     {},
   );
-  expect(fn()).toBe(100);
+  expect(fn()).toBe(4);
+});
+
+it('should handle global -> function arg -> block scopes correctly', () => {
+  const fn = buildSemanticFn(
+    `
+    let a = 1
+    let b = 1
+    let shadowed = 10
+
+    {
+      let a = 5
+      b = a
+    }
+
+    globalArg + fnArg + a + b + shadowed
+    `,
+    { argNames: ['fnArg', 'shadowed'], scope: { globalArg: 100, shadowed: 500 } },
+  );
+
+  expect(fn(50, 200)).toBe(166);
+});
+
+it.each`
+  statement  | descriptor       | expected
+  ${'block'} | ${'{\n1 + 2\n}'} | ${3}
+`("should return the value of a $statement statement if it's the last statement", ({ descriptor, expected }) => {
+  const fn = buildSemanticFn(descriptor);
+  expect(fn()).toBe(expected);
 });

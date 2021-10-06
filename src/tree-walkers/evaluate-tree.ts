@@ -1,5 +1,7 @@
 import { TokenType } from '../tokens';
 import { TreeWalkerFnMap } from '../tree-walker';
+import { buildEnvironment, Environment } from '../environment';
+import { CaptureRuntimeError } from '../errors';
 
 const {
   BANG,
@@ -9,7 +11,6 @@ const {
   EQUAL_EQUAL_EQUAL,
   GREATER,
   GREATER_EQUAL,
-  IDENTIFIER,
   LESS,
   LESS_EQUAL,
   MINUS,
@@ -19,8 +20,21 @@ const {
   STAR,
 } = TokenType;
 
-export function evaluateTree(argMap: Record<string, number>, ...args: any[]): TreeWalkerFnMap {
+type EvaluateTree = {
+  captureError: CaptureRuntimeError;
+  enclosing: Environment;
+};
+
+export function evaluateTree({ captureError, enclosing }: EvaluateTree): TreeWalkerFnMap {
+  // Block statements will change the execution environment
+  let environment = buildEnvironment({ captureError, enclosing, readonly: false });
+
   return {
+    Assignment: (expr, evaluate) => {
+      const value = evaluate(expr.value);
+      environment.assign(expr.name, value);
+      return value;
+    },
     Binary: (expr, evaluate) => {
       const left = evaluate(expr.left);
       const right = evaluate(expr.right);
@@ -59,14 +73,6 @@ export function evaluateTree(argMap: Record<string, number>, ...args: any[]): Tr
       return evaluate(expr.expression);
     },
     Literal: (expr) => {
-      // TODO: Handle this correctly after scope is added
-      /*
-      if (expr.tokenType === ACCESSOR) {
-        const [argName, ...properties] = expr.value as string[];
-        return properties.reduce<any>((value, nextProperty) => value?.[nextProperty], args[argMap[argName]]);
-      }
-        */
-
       return expr.token.literal;
     },
     Unary: (expr, evaluate) => {
@@ -84,8 +90,35 @@ export function evaluateTree(argMap: Record<string, number>, ...args: any[]): Tr
       // This should not be reachable
       return null;
     },
-    ExprStmt: (expr, evaluate) => {
-      return evaluate(expr);
+    Variable: (expr) => {
+      return environment.get(expr.name);
+    },
+    Block: (stmt, execute) => {
+      const previous = environment;
+
+      try {
+        // Set up a new environment for the block scope
+        environment = buildEnvironment({ captureError, enclosing: previous, readonly: false });
+
+        let value: any;
+
+        for (const statement of stmt.statements) {
+          value = execute(statement);
+        }
+
+        return value;
+      } finally {
+        // Reset the environment after leaving the block
+        environment = previous;
+      }
+    },
+    ExprStmt: (stmt, evaluate) => {
+      return evaluate(stmt.expr);
+    },
+    LetDecl: (stmt, evaluate) => {
+      const value = stmt.initializer && evaluate(stmt.initializer);
+      environment.define(stmt.name.lexeme, value);
+      return value;
     },
   };
 }

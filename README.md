@@ -30,7 +30,7 @@ This is where a tool like `semantic-fn` comes into play. By defining a strict se
 
 ### Context-Free Grammar
 
-The grammar specified by `semantic-fn` is designed to be as close to JavaScript as possible. The following expressions are allowed:
+The grammar specified by `semantic-fn` is designed to be as close to JavaScript as possible. The following expressions and statements are allowed:
 
 - **Literals:** Numbers, strings, Booleans, undefined and null.
 - **Identifier:** A special type of literal which is either a reserved keyword or a variable name.
@@ -39,11 +39,17 @@ The grammar specified by `semantic-fn` is designed to be as close to JavaScript 
 - **Parentheses:** A way to group other expressions to show desired precedence.
 - **Statements:** A statement is a series of tokens which can be executed in isolation. `semantic-fn` opts to return the value of a statement which means there's no need for an explicit `return` keyword and the last statement in the parsed descriptor string is the return value of the returned function. The following statement types exist:
   - **Expression**: Any expression followed by a new line which signifies the end of the expression.
+  - **Declarations:** A special statement which provides a way to store state in a local variable which can be reassigned. The variable created adheres to standard JavaScript scoping rules.
+  - **Block:** A series of statements with a unique environment and variable scope.
 
 #### Special Considerations
 
-- **Scope**
-  - TBD...
+- **Scope:** `semantic-fn` has three types of scope (global, fnArgs and block). The order of precedence for the scopes is `block → fnArgs → global` where duplicate variable names in a lower scope will shadow a variable in a higher scope. `global` and `fnArgs` are readonly to prevent mutation of external state.
+
+  - **global:** Passed in using the `scope` option when building a function. It's an object where the key is the variable name and the value is the, well, value.
+  - **fnArgs:** These are the arguments which are passed into the function when it's executed. The variable names are defined using the `argNames` option. It's an array of strings where the string is the variable name and the index is the function parameter you want to reference.
+  - **block:** Variables can be defined in the descriptor string that's passed to `semantic-fn`. Any variables defined in a block will get their own variable scope.
+
 - **Modifiers**
   - `toString` - convert the following expression to a string
   - `toBool` - convert the following expression to a Boolean
@@ -54,9 +60,12 @@ The grammar rules are defined below. Instead of using something like [Backus-Nau
 
 ```haskell
 -- Grammar Rules (in ascending order of precedence)
-program → statement* EOT ;
-statement → exprStmt ;
+program → declaration* EOT ;
+declaration → letDecl | statement ;
+letDecl → "let" IDENTIFIER ( "=" expression )? "\n" ;
+statement → exprStmt | block ;
 exprStmt → expression "\n" ;
+block → "{" declaration* "}" ;
 expression → equality ;
 equality → comparison ( ( "!=", "!==", "==", "===" ) comparison )* ;
 comparison → term ( ( ">", ">=", "<", "<=" ) term )* ;

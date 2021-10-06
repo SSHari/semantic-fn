@@ -1,23 +1,22 @@
+import { Token } from './tokens';
+
 export type CaptureError = (line: number, message: string, value: string) => void;
+export type CaptureRuntimeError = (token: Token, message: string) => void;
 
 type ErrorInfo = { line: number; message: string; value: string };
+type RuntimeErrorInfo = { token: Token; message: string };
 
 export function createErrorTracker() {
   const compileErrors: ErrorInfo[] = [];
-  const runTimeErrors: ErrorInfo[] = [];
+  const runtimeErrors: RuntimeErrorInfo[] = [];
 
-  function captureError(errors: ErrorInfo[], line: number, message: string, value: string) {
-    errors.push({ line, message, value });
-    // errors.push(new Error(`Error: ${message}\n${line} | ${value}`));
-  }
-
-  const captureCompileError: CaptureError = (...args) => captureError(compileErrors, ...args);
-  const captureRunTimeError: CaptureError = (...args) => captureError(runTimeErrors, ...args);
+  const captureCompileError: CaptureError = (line, message, value) => compileErrors.push({ line, message, value });
+  const captureRuntimeError: CaptureRuntimeError = (token, message) => runtimeErrors.push({ token, message });
 
   return {
     compileErrors,
-    runTimeErrors,
+    runtimeErrors,
     captureCompileError,
-    captureRunTimeError,
+    captureRuntimeError,
   };
 }
