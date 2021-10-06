@@ -34,6 +34,9 @@ const {
   STRING,
   NUMBER,
 
+  // Statement separator
+  NEW_LINE,
+
   // End of string
   EOT,
 } = TokenType;
@@ -205,6 +208,7 @@ export function scanner(source: string, captureError: CaptureError) {
         // Ignore whitespace
         break;
       case '\n':
+        addToken(NEW_LINE);
         line++;
         break;
       case '"':

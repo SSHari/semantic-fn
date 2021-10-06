@@ -37,6 +37,8 @@ The grammar specified by `semantic-fn` is designed to be as close to JavaScript 
 - **Unary expressions:** A prefix `!` which performs a logical not and `-` to negate a number and any `MODIFIER` which modifies the value after it.
 - **Binary expressions:** The following infix arithmetic operators (+, -, \*, /) and the following logical operators (==, ===, !=, !==, <, <=, >, >=). These operators behave the same way you would expect them to behave in JavaScript.
 - **Parentheses:** A way to group other expressions to show desired precedence.
+- **Statements:** A statement is a series of tokens which can be executed in isolation. `semantic-fn` opts to return the value of a statement which means there's no need for an explicit `return` keyword and the last statement in the parsed descriptor string is the return value of the returned function. The following statement types exist:
+  - **Expression**: Any expression followed by a new line which signifies the end of the expression.
 
 #### Special Considerations
 
@@ -52,6 +54,9 @@ The grammar rules are defined below. Instead of using something like [Backus-Nau
 
 ```haskell
 -- Grammar Rules (in ascending order of precedence)
+program → statement* EOT ;
+statement → exprStmt ;
+exprStmt → expression "\n" ;
 expression → equality ;
 equality → comparison ( ( "!=", "!==", "==", "===" ) comparison )* ;
 comparison → term ( ( ">", ">=", "<", "<=" ) term )* ;

@@ -16,10 +16,10 @@ export function buildSemanticFn(descriptor: string, options: SemanticFnOptions =
   const normalizedDescriptor = normalizer(descriptor);
 
   const tokens = scanner(normalizedDescriptor, errorTracker.captureCompileError);
-  const syntaxTree = parser(tokens, errorTracker.captureCompileError);
+  const statements = parser(tokens, errorTracker.captureCompileError);
 
-  if (syntaxTree) {
-    return (...args: any[]) => walkTree(evaluateTree(argMap, ...args), syntaxTree);
+  if (statements) {
+    return (...args: any[]) => walkTree(evaluateTree(argMap, ...args), statements);
   }
 
   return () => defaultReturnValue;

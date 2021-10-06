@@ -42,6 +42,9 @@ const TokenStrings = [
   'NULL',
   'UNDEFINED',
 
+  // Statement separator
+  'NEW_LINE',
+
   // End of string
   'EOT',
 ] as const;

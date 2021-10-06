@@ -1,6 +1,8 @@
 import { buildSemanticFn } from '../semantic-fn';
 
 /*
+  ${'true'}        | ${[]} | ${{}}   | ${true}
+  ${'false'}       | ${[]} | ${{}}   | ${false}
   ${'person.age > 20'}      | ${[{ age: 21 }]}              | ${{ argNames: ['person'] }}         | ${true}
   ${'person.age + 20'}      | ${[{ age: 20 }]}              | ${{ argNames: ['person'] }}         | ${40}
   ${'toBool 0'}             | ${[]}                         | ${{ argNames: [] }}                 | ${false}
@@ -17,4 +19,16 @@ it.each`
 `('should return a function that evaluates `$descriptor` correctly', ({ descriptor, args, options, expected }) => {
   const fn = buildSemanticFn(descriptor, options);
   expect(fn(...args)).toBe(expected);
+});
+
+it('should return the last statement of a multi-line descriptor', () => {
+  const fn = buildSemanticFn(
+    `
+    1 + 2
+    2 + 3
+    100
+    `,
+    {},
+  );
+  expect(fn()).toBe(100);
 });

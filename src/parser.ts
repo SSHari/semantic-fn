@@ -1,4 +1,5 @@
 import { Expr, createBinary, createGrouping, createLiteral, createUnary } from './expressions';
+import { Stmt, createExprStmt } from './statements';
 import { Token, TokenString, TokenType } from './tokens';
 import { CaptureError } from './errors';
 
@@ -35,6 +36,9 @@ const {
   FALSE,
   NULL,
   UNDEFINED,
+
+  // Statement separator
+  NEW_LINE,
 
   // End of string
   EOT,
@@ -103,7 +107,7 @@ export function parser(tokens: Token[], captureError: CaptureError) {
     };
   }
 
-  // Grammar Symbol Builders
+  // Expression Grammar Symbol Builders
   function primary() {
     if (match(FALSE, TRUE, NULL, UNDEFINED, NUMBER, STRING, IDENTIFIER)) {
       return createLiteral(previous());
@@ -137,14 +141,27 @@ export function parser(tokens: Token[], captureError: CaptureError) {
     return equality();
   }
 
+  // Statement Grammar Symbol Builders
+  function statement() {
+    return expressionStatement();
+  }
+
+  function expressionStatement() {
+    const expr = expression();
+    !isAtEnd() && consume(NEW_LINE, 'Expect a \\n after an expression.');
+    return createExprStmt(expr);
+  }
+
   function parse() {
-    try {
-      return expression();
-    } catch (error) {
-      // TODO: Handle errors correctly
-      console.log(error);
-      return null;
+    const statements: Stmt[] = [];
+
+    while (!isAtEnd()) {
+      // Skip over new lines which aren't part of a statement
+      while (peek().type === NEW_LINE) advance();
+      statements.push(statement());
     }
+
+    return statements;
   }
 
   return parse();

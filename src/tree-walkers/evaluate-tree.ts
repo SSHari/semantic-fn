@@ -84,6 +84,9 @@ export function evaluateTree(argMap: Record<string, number>, ...args: any[]): Tr
       // This should not be reachable
       return null;
     },
+    ExprStmt: (expr, evaluate) => {
+      return evaluate(expr);
+    },
   };
 }
 

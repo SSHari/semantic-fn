@@ -51,8 +51,9 @@ it('should scan the source and return a list of tokens correctly', () => {
     errorTracker.captureCompileError,
   );
 
-  expect(tokensTwo).toHaveLength(15);
+  expect(tokensTwo).toHaveLength(19);
   expect(tokensTwo).toEqual([
+    buildTokenObj('NEW_LINE', '\n', undefined, 1),
     buildTokenObj('LEFT_PAREN', '(', undefined, 2),
     buildTokenObj('NUMBER', '1', 1, 2),
     buildTokenObj('MINUS', '-', undefined, 2),
@@ -64,9 +65,12 @@ it('should scan the source and return a list of tokens correctly', () => {
     buildTokenObj('NUMBER', '4', 4, 2),
     buildTokenObj('SLASH', '/', undefined, 2),
     buildTokenObj('NUMBER', '2', 2, 2),
+    buildTokenObj('NEW_LINE', '\n', undefined, 2),
     buildTokenObj('OR', 'or', undefined, 3),
+    buildTokenObj('NEW_LINE', '\n', undefined, 3),
     buildTokenObj('MODIFIER', 'toBool', undefined, 4),
     buildTokenObj('UNDEFINED', 'undefined', undefined, 4),
+    buildTokenObj('NEW_LINE', '\n', undefined, 4),
     buildTokenObj('EOT'),
   ]);
 });
