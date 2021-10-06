@@ -21,8 +21,7 @@ This is where a tool like `semantic-fn` comes into play. By defining a strict se
 ### Rules
 
 - Functions which `semantic-fn` return are pure
-- No access to outside variables (global or within a closure)
-- Can only access the parameters which are passed to the function
+- Strict variable access from a predefined "global" state, function parameters or local variables
 - Can only execute predefined functions, such as the string function `trim`
 
 ## How?
@@ -34,15 +33,15 @@ This is where a tool like `semantic-fn` comes into play. By defining a strict se
 The grammar specified by `semantic-fn` is designed to be as close to JavaScript as possible. The following expressions are allowed:
 
 - **Literals:** Numbers, strings, Booleans, undefined and null.
-- **Accessors:** A sequence of characters separated by a `.` to signify which property of a given function parameter to access.
+- **Identifier:** A special type of literal which is either a reserved keyword or a variable name.
 - **Unary expressions:** A prefix `!` which performs a logical not and `-` to negate a number and any `MODIFIER` which modifies the value after it.
 - **Binary expressions:** The following infix arithmetic operators (+, -, \*, /) and the following logical operators (==, ===, !=, !==, <, <=, >, >=). These operators behave the same way you would expect them to behave in JavaScript.
 - **Parentheses:** A way to group other expressions to show desired precedence.
 
 #### Special Considerations
 
-- **Accessors**
-  - `person.age` - return the `age` from the function parameter `person`
+- **Scope**
+  - TBD...
 - **Modifiers**
   - `toString` - convert the following expression to a string
   - `toBool` - convert the following expression to a Boolean
@@ -59,5 +58,5 @@ comparison → term ( ( ">", ">=", "<", "<=" ) term )* ;
 term → factor ( ( "-", "+" ) factor )* ;
 factor → unary ( ( "/", "*" ) unary )* ;
 unary → ( "!", "-", MODIFIER ) unary | primary ;
-primary → NUMBER | STRING | ACCESSOR | "true" | "false" | "undefined" | "null" | "(" expression ")" ;
+primary → NUMBER | STRING | IDENTIFIER | "true" | "false" | "undefined" | "null" | "(" expression ")" ;
 ```

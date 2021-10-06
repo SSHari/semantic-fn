@@ -1,5 +1,12 @@
 const TokenStrings = [
   // Single character tokens
+  'COLON',
+  'COMMA',
+  'DOT',
+  'LEFT_BRACE',
+  'RIGHT_BRACE',
+  'LEFT_BRACKET',
+  'RIGHT_BRACKET',
   'LEFT_PAREN',
   'RIGHT_PAREN',
   'MINUS',
@@ -7,19 +14,20 @@ const TokenStrings = [
   'SLASH',
   'STAR',
 
-  // One or two character tokens
+  // 1 - 3 character tokens
   'BANG',
   'BANG_EQUAL',
   'BANG_EQUAL_EQUAL',
   'EQUAL',
   'EQUAL_EQUAL',
+  'EQUAL_EQUAL_EQUAL',
   'GREATER',
   'GREATER_EQUAL',
   'LESS',
   'LESS_EQUAL',
 
   // Literals
-  'ACCESSOR',
+  'IDENTIFIER',
   'STRING',
   'NUMBER',
 
@@ -39,11 +47,11 @@ const TokenStrings = [
 ] as const;
 
 export type TokenString = typeof TokenStrings[number];
-type TokenType = Record<TokenString, TokenString>;
+type TokenType = { [Token in TokenString]: Token };
 
 export const TokenType = TokenStrings.reduce<Partial<TokenType>>((types, tokenString) => ({ ...types, [tokenString]: tokenString }), {}) as TokenType;
 
-export const KeyWords = new Map([
+export const KeyWords: Map<string, TokenString> = new Map([
   ['and', 'AND'],
   ['or', 'OR'],
   ['true', 'TRUE'],

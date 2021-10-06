@@ -1,12 +1,51 @@
 import { Expr, createBinary, createGrouping, createLiteral, createUnary } from './expressions';
 import { Token, TokenString, TokenType } from './tokens';
+import { CaptureError } from './errors';
 
-export function parser(tokens: Token[]) {
+const {
+  // Single character tokens
+  LEFT_PAREN,
+  RIGHT_PAREN,
+  MINUS,
+  PLUS,
+  SLASH,
+  STAR,
+
+  // 1 - 3 character tokens
+  BANG,
+  BANG_EQUAL,
+  BANG_EQUAL_EQUAL,
+  EQUAL_EQUAL,
+  EQUAL_EQUAL_EQUAL,
+  GREATER,
+  GREATER_EQUAL,
+  LESS,
+  LESS_EQUAL,
+
+  // Literals
+  IDENTIFIER,
+  STRING,
+  NUMBER,
+
+  // Modifiers (e.g. toString, toBool)
+  MODIFIER,
+
+  // Keywords
+  TRUE,
+  FALSE,
+  NULL,
+  UNDEFINED,
+
+  // End of string
+  EOT,
+} = TokenType;
+
+export function parser(tokens: Token[], captureError: CaptureError) {
   let current = 0;
 
   // Grammar Symbol Helpers
   function isAtEnd() {
-    return peek().type === TokenType.EOT;
+    return peek().type === EOT;
   }
 
   function advance() {
@@ -40,8 +79,13 @@ export function parser(tokens: Token[]) {
 
   function consume(type: TokenString, errorMessage: string) {
     if (check(type)) return advance();
+    captureError(peek().line, errorMessage, peek().lexeme ?? '');
+    throw new Error(errorMessage);
+  }
 
-    // TODO: Handle error here based on errorMessage
+  function synchronize() {
+    // TODO: Make this a bit more robust
+    advance();
   }
 
   // Create Binary Operator Builder
@@ -61,22 +105,21 @@ export function parser(tokens: Token[]) {
 
   // Grammar Symbol Builders
   function primary() {
-    if (match(TokenType.FALSE, TokenType.TRUE, TokenType.NULL, TokenType.UNDEFINED, TokenType.NUMBER, TokenType.STRING, TokenType.ACCESSOR)) {
+    if (match(FALSE, TRUE, NULL, UNDEFINED, NUMBER, STRING, IDENTIFIER)) {
       return createLiteral(previous());
     }
 
-    if (match(TokenType.LEFT_PAREN)) {
+    if (match(LEFT_PAREN)) {
       const expr = expression();
-      consume(TokenType.RIGHT_PAREN, "Expected a ')' after the expression.");
+      consume(RIGHT_PAREN, "Expected a ')' after the expression.");
       return createGrouping(expr);
     }
 
-    // TODO: Remove this and throw an error which will be caught later
-    return createLiteral(previous());
+    throw new Error('No match found');
   }
 
   function unary(): Expr {
-    if (match(TokenType.BANG, TokenType.MINUS, TokenType.MODIFIER)) {
+    if (match(BANG, MINUS, MODIFIER)) {
       const operator = previous();
       const right = unary();
       return createUnary(operator, right);
@@ -85,10 +128,10 @@ export function parser(tokens: Token[]) {
     return primary();
   }
 
-  const factor = buildBinaryOperatorFn([TokenType.SLASH, TokenType.STAR], unary);
-  const term = buildBinaryOperatorFn([TokenType.MINUS, TokenType.PLUS], factor);
-  const comparison = buildBinaryOperatorFn([TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL], term);
-  const equality = buildBinaryOperatorFn([TokenType.BANG_EQUAL, TokenType.BANG_EQUAL_EQUAL, TokenType.EQUAL, TokenType.EQUAL_EQUAL], comparison);
+  const factor = buildBinaryOperatorFn([SLASH, STAR], unary);
+  const term = buildBinaryOperatorFn([MINUS, PLUS], factor);
+  const comparison = buildBinaryOperatorFn([GREATER, GREATER_EQUAL, LESS, LESS_EQUAL], term);
+  const equality = buildBinaryOperatorFn([BANG_EQUAL, BANG_EQUAL_EQUAL, EQUAL_EQUAL, EQUAL_EQUAL_EQUAL], comparison);
 
   function expression() {
     return equality();
@@ -98,7 +141,7 @@ export function parser(tokens: Token[]) {
     try {
       return expression();
     } catch (error) {
-      // Handle errors correctly
+      // TODO: Handle errors correctly
       console.log(error);
       return null;
     }

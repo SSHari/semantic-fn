@@ -1,22 +1,24 @@
 import { scanner } from '../scanner';
 import { parser } from '../parser';
 import { Expr } from '../expressions';
+import { createErrorTracker } from '../errors';
 
 it('should scan a list of tokens and return a syntax tree correctly', () => {
   function buildExprObj(expression: Partial<Expr>) {
     return expect.objectContaining({ ...expression });
   }
 
-  // TODO: This is passing, but it's wrong because we haven't implemented or / and
-  const tokensOne = scanner('person.age > 20 or person.name.length > 7', { person: 0 });
-  const syntaxTreeOne = parser(tokensOne);
+  const errorTracker = createErrorTracker();
+
+  const tokensOne = scanner('age > 20', errorTracker.captureCompileError);
+  const syntaxTreeOne = parser(tokensOne, errorTracker.captureCompileError);
 
   expect(syntaxTreeOne).toEqual(
     buildExprObj({
       type: 'Binary',
-      left: buildExprObj({ type: 'Literal' }),
+      left: buildExprObj({ type: 'Literal', token: expect.objectContaining({ lexeme: 'age' }) }),
       operator: { type: 'GREATER', line: 1, lexeme: '>' },
-      right: buildExprObj({ type: 'Literal' }),
+      right: buildExprObj({ type: 'Literal', token: expect.objectContaining({ lexeme: '20', literal: 20 }) }),
     }),
   );
 

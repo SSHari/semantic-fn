@@ -1,8 +1,8 @@
-import { Token, TokenString } from './tokens';
+import { Token } from './tokens';
 
 export type Binary = { type: 'Binary'; left: Expr; operator: Token; right: Expr };
 export type Grouping = { type: 'Grouping'; expression: Expr };
-export type Literal = { type: 'Literal'; tokenType: TokenString; value: any };
+export type Literal = { type: 'Literal'; token: Token };
 export type Unary = { type: 'Unary'; operator: Token; right: Expr };
 
 export type Expr = Binary | Grouping | Literal | Unary;
@@ -15,8 +15,8 @@ export function createGrouping(expression: Expr): Grouping {
   return { type: 'Grouping', expression };
 }
 
-export function createLiteral({ type, literal }: Token): Literal {
-  return { type: 'Literal', tokenType: type, value: literal };
+export function createLiteral(token: Token): Literal {
+  return { type: 'Literal', token };
 }
 
 export function createUnary(operator: Token, right: Expr): Unary {

@@ -1,6 +1,44 @@
 import { KeyWords, Token, TokenType, TokenString } from './tokens';
+import { CaptureError } from './errors';
 
-export function scanner(source: string, argMap: Record<string, any>) {
+const {
+  // Single character tokens
+  COLON,
+  COMMA,
+  DOT,
+  LEFT_BRACE,
+  RIGHT_BRACE,
+  LEFT_BRACKET,
+  RIGHT_BRACKET,
+  LEFT_PAREN,
+  RIGHT_PAREN,
+  MINUS,
+  PLUS,
+  SLASH,
+  STAR,
+
+  // One or two character tokens
+  BANG,
+  BANG_EQUAL,
+  BANG_EQUAL_EQUAL,
+  EQUAL,
+  EQUAL_EQUAL,
+  EQUAL_EQUAL_EQUAL,
+  GREATER,
+  GREATER_EQUAL,
+  LESS,
+  LESS_EQUAL,
+
+  // Literals
+  IDENTIFIER,
+  STRING,
+  NUMBER,
+
+  // End of string
+  EOT,
+} = TokenType;
+
+export function scanner(source: string, captureError: CaptureError) {
   const tokens: Token[] = [];
   let start = 0;
   let current = 0;
@@ -47,24 +85,20 @@ export function scanner(source: string, argMap: Record<string, any>) {
     return source.charAt(current + 1);
   }
 
-  function isWhiteSpace(char: string) {
-    return char === ' ' || char === '\r' || char === '\t' || char === '\n';
-  }
-
   function string(quoteType: string) {
     while (peek() !== quoteType && !isAtEnd()) {
       if (peek() === '\n') line++;
       advance();
     }
 
-    if (isAtEnd()) console.log('Unterminated string');
+    if (isAtEnd()) captureError(line, 'Unterminated string', source.substring(start, current));
 
     // Step over the terminating quote
     advance();
 
     // Trim the quotes out
     const text = source.substring(start + 1, current - 1);
-    addToken(TokenType.STRING, text);
+    addToken(STRING, text);
   }
 
   function isDigit(char: string) {
@@ -81,75 +115,89 @@ export function scanner(source: string, argMap: Record<string, any>) {
       while (isDigit(peek())) advance();
     }
 
-    // TODO: Handle other potential errors
-    if (peek() === '.') console.log('You cannot have another . in a decimal');
+    if (peek() === '.') captureError(line, 'You can only have one `.` in a decimal number', source.substring(start, current));
+    if (isAlpha(peek())) captureError(line, 'An alpha character cannot immediately follow a number', `${source.substring(start, current)}${peek()}`);
 
     // Convert value to a number
-    addToken(TokenType.NUMBER, Number(source.substring(start, current)));
+    addToken(NUMBER, Number(source.substring(start, current)));
   }
 
   function isAlpha(char: string) {
-    return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z');
+    return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || char === '_';
+  }
+
+  function isAlphaNumeric(char: string) {
+    return isAlpha(char) || isDigit(char);
   }
 
   function identifier() {
-    while (!isWhiteSpace(peek()) && !isAtEnd()) advance();
+    while (isAlphaNumeric(peek())) advance();
 
     const text = source.substring(start, current);
-    const accessorParts = text.split('.');
-
-    if (KeyWords.has(text) && KeyWords.get(text) === 'MODIFIER') {
-      addToken(TokenType[KeyWords.get(text) as TokenString], text);
-    } else if (KeyWords.has(text)) {
-      addToken(TokenType[KeyWords.get(text) as TokenString]);
-    } else if (typeof argMap[accessorParts[0]] === 'number') {
-      // Verify that the accessor starts
-      // with one of the defined arg names
-      addToken(TokenType.ACCESSOR, accessorParts);
-    } else {
-      console.log('This is an identifier error');
-    }
+    const type = KeyWords.get(text) ?? IDENTIFIER;
+    addToken(type);
   }
 
   // Handle scanning
   function scanToken() {
     const nextChar = advance();
     switch (nextChar) {
+      case ':':
+        addToken(COLON);
+        break;
+      case ',':
+        addToken(COMMA);
+        break;
+      case '.':
+        addToken(DOT);
+        break;
+      case '{':
+        addToken(LEFT_BRACE);
+        break;
+      case '}':
+        addToken(RIGHT_BRACE);
+        break;
+      case '[':
+        addToken(LEFT_BRACKET);
+        break;
+      case ']':
+        addToken(RIGHT_BRACKET);
+        break;
       case '(':
-        addToken(TokenType.LEFT_PAREN);
+        addToken(LEFT_PAREN);
         break;
       case ')':
-        addToken(TokenType.RIGHT_PAREN);
+        addToken(RIGHT_PAREN);
         break;
       case '-':
-        addToken(TokenType.MINUS);
+        addToken(MINUS);
         break;
       case '+':
-        addToken(TokenType.PLUS);
+        addToken(PLUS);
         break;
       case '*':
-        addToken(TokenType.STAR);
+        addToken(STAR);
         break;
       case '/':
-        addToken(TokenType.SLASH);
+        addToken(SLASH);
         break;
       case '!':
-        if (matchNext('==')) addToken(TokenType.BANG_EQUAL_EQUAL);
-        else if (match('=')) addToken(TokenType.BANG_EQUAL);
-        else addToken(TokenType.BANG);
+        if (matchNext('==')) addToken(BANG_EQUAL_EQUAL);
+        else if (match('=')) addToken(BANG_EQUAL);
+        else addToken(BANG);
         break;
       case '=':
-        if (matchNext('==')) addToken(TokenType.EQUAL_EQUAL);
-        else if (match('=')) addToken(TokenType.EQUAL);
-        else console.log('Handle error for single =');
+        if (matchNext('==')) addToken(EQUAL_EQUAL_EQUAL);
+        else if (match('=')) addToken(EQUAL_EQUAL);
+        else addToken(EQUAL);
         break;
       case '<':
-        if (match('=')) addToken(TokenType.LESS_EQUAL);
-        else addToken(TokenType.LESS);
+        if (match('=')) addToken(LESS_EQUAL);
+        else addToken(LESS);
         break;
       case '>':
-        if (match('=')) addToken(TokenType.GREATER_EQUAL);
-        else addToken(TokenType.GREATER);
+        if (match('=')) addToken(GREATER_EQUAL);
+        else addToken(GREATER);
         break;
       case ' ':
       case '\r':
@@ -168,7 +216,7 @@ export function scanner(source: string, argMap: Record<string, any>) {
       default:
         if (isDigit(nextChar)) number();
         else if (isAlpha(nextChar)) identifier();
-        else console.log('Handle errors better');
+        else captureError(line, `Unknown token starting with ${nextChar}`, '');
     }
   }
 
@@ -179,7 +227,7 @@ export function scanner(source: string, argMap: Record<string, any>) {
       scanToken();
     }
 
-    tokens.push({ type: TokenType.EOT, line });
+    tokens.push({ type: EOT, line });
 
     return tokens;
   }
