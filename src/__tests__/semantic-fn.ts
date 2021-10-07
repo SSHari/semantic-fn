@@ -7,17 +7,21 @@ import { buildSemanticFn } from '../semantic-fn';
   ${'person.name === name'} | ${[{ name: 'Jack' }, 'Jack']} | ${{ argNames: ['person', 'name'] }} | ${true}
   */
 it.each`
-  descriptor           | args        | options                   | expected
-  ${'1 + 5 === 6'}     | ${[]}       | ${{}}                     | ${true}
-  ${'10 + 10 * 2'}     | ${[]}       | ${{}}                     | ${30}
-  ${'10 - 5 - 3'}      | ${[]}       | ${{}}                     | ${2}
-  ${'true'}            | ${[]}       | ${{}}                     | ${true}
-  ${'false'}           | ${[]}       | ${{}}                     | ${false}
-  ${'null'}            | ${[]}       | ${{}}                     | ${null}
-  ${'undefined'}       | ${[]}       | ${{}}                     | ${undefined}
-  ${'toBool 0'}        | ${[]}       | ${{ argNames: [] }}       | ${false}
-  ${'name === "Jack"'} | ${['Jack']} | ${{ argNames: ['name'] }} | ${true}
-  ${'age == "20"'}     | ${[20]}     | ${{ argNames: ['age'] }}  | ${true}
+  descriptor                           | args        | options                   | expected
+  ${'1 + 5 === 6'}                     | ${[]}       | ${{}}                     | ${true}
+  ${'10 + 10 * 2'}                     | ${[]}       | ${{}}                     | ${30}
+  ${'10 - 5 - 3'}                      | ${[]}       | ${{}}                     | ${2}
+  ${'true'}                            | ${[]}       | ${{}}                     | ${true}
+  ${'false'}                           | ${[]}       | ${{}}                     | ${false}
+  ${'null'}                            | ${[]}       | ${{}}                     | ${null}
+  ${'undefined'}                       | ${[]}       | ${{}}                     | ${undefined}
+  ${'toBool 0'}                        | ${[]}       | ${{ argNames: [] }}       | ${false}
+  ${'name === "Jack"'}                 | ${['Jack']} | ${{ argNames: ['name'] }} | ${true}
+  ${'age == "20"'}                     | ${[20]}     | ${{ argNames: ['age'] }}  | ${true}
+  ${'true and "short-circuit-check"'}  | ${[]}       | ${{}}                     | ${'short-circuit-check'}
+  ${'true or "short-circuit-check"'}   | ${[]}       | ${{}}                     | ${true}
+  ${'false and "short-circuit-check"'} | ${[]}       | ${{}}                     | ${false}
+  ${'false or "short-circuit-check"'}  | ${[]}       | ${{}}                     | ${'short-circuit-check'}
 `('should return a function that evaluates `$descriptor` correctly', ({ descriptor, args, options, expected }) => {
   const fn = buildSemanticFn(descriptor, options);
   expect(fn(...args)).toBe(expected);

@@ -35,7 +35,7 @@ The grammar specified by `semantic-fn` is designed to be as close to JavaScript 
 - **Literals:** Numbers, strings, Booleans, undefined and null.
 - **Identifier:** A special type of literal which is either a reserved keyword or a variable name.
 - **Unary expressions:** A prefix `!` which performs a logical not and `-` to negate a number and any `MODIFIER` which modifies the value after it.
-- **Binary expressions:** The following infix arithmetic operators (+, -, \*, /) and the following logical operators (==, ===, !=, !==, <, <=, >, >=). These operators behave the same way you would expect them to behave in JavaScript.
+- **Binary expressions:** The following infix arithmetic operators (+, -, \*, /) and the following logical operators (==, ===, !=, !==, <, <=, >, >=, and, or). These operators behave the same way you would expect them to behave in JavaScript.
 - **Parentheses:** A way to group other expressions to show desired precedence.
 - **Statements:** A statement is a series of tokens which can be executed in isolation. `semantic-fn` opts to return the value of a statement which means there's no need for an explicit `return` keyword and the last statement in the parsed descriptor string is the return value of the returned function. The following statement types exist:
   - **Expression**: Any expression followed by a new line which signifies the end of the expression.
@@ -61,20 +61,34 @@ The grammar rules are defined below. Instead of using something like [Backus-Nau
 
 ```haskell
 -- Grammar Rules (in ascending order of precedence)
-program → declaration* EOT ;
-declaration → letDecl | statement ;
-letDecl → "let" IDENTIFIER ( "=" expression )? "\n" ;
-statement → exprStmt | block ;
-exprStmt → expression "\n" ;
-ifStmt → "if" "(" expression ")" statement ( "else" statement )?
-       | "if" expression "," "do:" expression ( "\n", "," "else:" expression "\n" ) ;
-block → "{" declaration* "}" ;
-expression → assignment ;
-assignment → IDENTIFIER "=" assignment | equality ;
-equality → comparison ( ( "!=", "!==", "==", "===" ) comparison )* ;
-comparison → term ( ( ">", ">=", "<", "<=" ) term )* ;
-term → factor ( ( "-", "+" ) factor )* ;
-factor → unary ( ( "/", "*" ) unary )* ;
-unary → ( "!", "-", MODIFIER ) unary | primary ;
-primary → NUMBER | STRING | IDENTIFIER | "true" | "false" | "undefined" | "null" | "(" expression ")" ;
+program       → declaration* EOT ;
+declaration   → letDecl
+                | statement ;
+letDecl       → "let" IDENTIFIER ( "=" expression )? "\n" ;
+statement     → exprStmt
+                | ifStmt
+                | block ;
+exprStmt      → expression "\n" ;
+ifStmt        → "if" "(" expression ")" statement ( "else" statement )?
+                | "if" expression "," "do:" expression ( "\n", "," "else:" expression "\n" ) ;
+block         → "{" declaration* "}" ;
+expression    → assignment ;
+assignment    → IDENTIFIER "=" assignment
+                | logic_or ;
+logic_or      → logic_and ( "or" logic_and)* ;
+logic_and     → equality ( "and" equality)* ;
+equality      → comparison ( ( "!=", "!==", "==", "===" ) comparison )* ;
+comparison    → term ( ( ">", ">=", "<", "<=" ) term )* ;
+term          → factor ( ( "-", "+" ) factor )* ;
+factor        → unary ( ( "/", "*" ) unary )* ;
+unary         → ( "!", "-", MODIFIER ) unary
+                | primary ;
+primary       → NUMBER
+                | STRING
+                | IDENTIFIER
+                | "true"
+                | "false"
+                | "undefined"
+                | "null"
+                | "(" expression ")" ;
 ```

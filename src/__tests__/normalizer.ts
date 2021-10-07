@@ -14,6 +14,7 @@ it.each`
   ${'1 minus 1'}                                                             | ${'1 - 1'}
   ${'1 multiply 1'}                                                          | ${'1 * 1'}
   ${'1 divide 1'}                                                            | ${'1 / 1'}
+  ${'1 && 2 && 3 || 4 && 5 || 6'}                                            | ${'1 and 2 and 3 or 4 and 5 or 6'}
   ${'person.age equal to the string 5 or person.name.length greater than 7'} | ${'person.age === toString 5 or person.name.length > 7'}
 `('should normalize `$source`', ({ source, normalizedSource }) => {
   expect(normalizer(source)).toEqual(normalizedSource);

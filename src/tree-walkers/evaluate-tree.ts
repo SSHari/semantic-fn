@@ -18,6 +18,8 @@ const {
   PLUS,
   SLASH,
   STAR,
+  AND,
+  OR,
 } = TokenType;
 
 type EvaluateTree = {
@@ -64,6 +66,10 @@ export function evaluateTree({ captureError, enclosing }: EvaluateTree): TreeWal
           return left / right;
         case STAR:
           return left * right;
+        case AND:
+          return left && right;
+        case OR:
+          return left || right;
       }
 
       // This should not be reachable

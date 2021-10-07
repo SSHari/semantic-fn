@@ -15,12 +15,20 @@ const semantics = {
   minus: '-',
   multiply: '*',
   divide: '/',
+
+  // Convert logic operations to text version
+  // to match the internal implementation.
+  '\\|\\|': 'or',
+  '&&': 'and',
 };
 
 const normalizerRegExp = new RegExp([...Object.keys(semantics)].join('|'), 'ig');
 
 export function normalizer(source: string) {
   const replacer = (replacement: string) => {
+    // Handle this separately because the pipe (`|`)
+    // operator is used for regex alternation.
+    if (replacement === '||') return 'or';
     if (semantics[replacement as Semantics]) return semantics[replacement as Semantics];
     return replacement;
   };

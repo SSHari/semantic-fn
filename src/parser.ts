@@ -45,6 +45,8 @@ const {
   IF,
   ELSE,
   DO,
+  OR,
+  AND,
 
   // Statement separator
   NEW_LINE,
@@ -156,9 +158,11 @@ export function parser(tokens: Token[], captureError: CaptureError) {
   const term = buildBinaryOperatorFn([MINUS, PLUS], factor);
   const comparison = buildBinaryOperatorFn([GREATER, GREATER_EQUAL, LESS, LESS_EQUAL], term);
   const equality = buildBinaryOperatorFn([BANG_EQUAL, BANG_EQUAL_EQUAL, EQUAL_EQUAL, EQUAL_EQUAL_EQUAL], comparison);
+  const and = buildBinaryOperatorFn([AND], equality);
+  const or = buildBinaryOperatorFn([OR], and);
 
   function assignment(): Expr {
-    const expr = equality();
+    const expr = or();
 
     if (match(EQUAL)) {
       const equals = previous();
