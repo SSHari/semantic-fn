@@ -84,7 +84,7 @@ export function evaluateTree({ captureError, enclosing }: EvaluateTree): TreeWal
         case BANG:
           return !right;
         case MODIFIER:
-          return handleModifier(right, expr.operator.literal);
+          return handleModifier(right, expr.operator.lexeme);
       }
 
       // This should not be reachable
@@ -93,7 +93,7 @@ export function evaluateTree({ captureError, enclosing }: EvaluateTree): TreeWal
     Variable: (expr) => {
       return environment.get(expr.name);
     },
-    Block: (stmt, execute) => {
+    Block: (stmt, _evaluate, execute) => {
       const previous = environment;
 
       try {
@@ -115,6 +115,14 @@ export function evaluateTree({ captureError, enclosing }: EvaluateTree): TreeWal
     ExprStmt: (stmt, evaluate) => {
       return evaluate(stmt.expr);
     },
+    IfExprStmt: (stmt, evaluate) => {
+      if (evaluate(stmt.condition)) return evaluate(stmt.thenBranch);
+      else if (stmt.elseBranch) return evaluate(stmt.elseBranch);
+    },
+    IfStmt: (stmt, evaluate, execute) => {
+      if (evaluate(stmt.condition)) return execute(stmt.thenBranch);
+      else if (stmt.elseBranch) return execute(stmt.elseBranch);
+    },
     LetDecl: (stmt, evaluate) => {
       const value = stmt.initializer && evaluate(stmt.initializer);
       environment.define(stmt.name.lexeme, value);
@@ -125,8 +133,8 @@ export function evaluateTree({ captureError, enclosing }: EvaluateTree): TreeWal
 
 /* Utilities */
 type Modifier = 'toString' | 'toBool';
-function handleModifier(value: any, modifier: Modifier) {
-  switch (modifier) {
+function handleModifier(value: any, modifier: string) {
+  switch (modifier as Modifier) {
     case 'toBool':
       return Boolean(value);
     case 'toString':

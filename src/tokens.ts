@@ -42,6 +42,9 @@ const TokenStrings = [
   'NULL',
   'UNDEFINED',
   'LET',
+  'IF',
+  'ELSE',
+  'DO',
 
   // Statement separator
   'NEW_LINE',
@@ -63,6 +66,9 @@ export const KeyWords: Map<string, TokenString> = new Map([
   ['null', 'NULL'],
   ['undefined', 'UNDEFINED'],
   ['let', 'LET'],
+  ['if', 'IF'],
+  ['else', 'ELSE'],
+  ['do', 'DO'],
   ['toString', 'MODIFIER'],
   ['toBool', 'MODIFIER'],
 ]);

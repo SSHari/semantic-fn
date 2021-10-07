@@ -1,5 +1,5 @@
 import { Expr, createAssignment, createBinary, createGrouping, createLiteral, createUnary, createVariable } from './expressions';
-import { Stmt, LetDecl, createBlock, createExprStmt, createLetDecl } from './statements';
+import { Stmt, LetDecl, createBlock, createExprStmt, createIfExprStmt, createIfStmt, createLetDecl } from './statements';
 import { Token, TokenString, TokenType } from './tokens';
 import { CaptureError } from './errors';
 
@@ -13,6 +13,8 @@ const {
   PLUS,
   SLASH,
   STAR,
+  COMMA,
+  COLON,
 
   // 1 - 3 character tokens
   BANG,
@@ -40,6 +42,9 @@ const {
   NULL,
   UNDEFINED,
   LET,
+  IF,
+  ELSE,
+  DO,
 
   // Statement separator
   NEW_LINE,
@@ -98,6 +103,8 @@ export function parser(tokens: Token[], captureError: CaptureError) {
 
   function synchronize() {
     // TODO: Make this a bit more robust
+    advance();
+
     // Skip over new lines which aren't part of a statement
     while (peek().type === NEW_LINE) advance();
   }
@@ -119,10 +126,11 @@ export function parser(tokens: Token[], captureError: CaptureError) {
 
   // Expression Grammar Symbol Builders
   function primary() {
-    if (match(FALSE, TRUE, NULL, UNDEFINED, NUMBER, STRING)) {
-      return createLiteral(previous());
-    }
-
+    if (match(FALSE)) return createLiteral({ ...previous(), literal: false });
+    if (match(TRUE)) return createLiteral({ ...previous(), literal: true });
+    if (match(NULL)) return createLiteral({ ...previous(), literal: null });
+    if (match(UNDEFINED)) return createLiteral({ ...previous(), literal: undefined });
+    if (match(NUMBER, STRING)) return createLiteral(previous());
     if (match(IDENTIFIER)) return createVariable(previous());
 
     if (match(LEFT_PAREN)) {
@@ -187,11 +195,47 @@ export function parser(tokens: Token[], captureError: CaptureError) {
     }
 
     consume(RIGHT_BRACE, 'Expect `}` after block.');
-    return statements;
+    return createBlock(statements);
+  }
+
+  // Handle single line if / else statements
+  // if check, do: true, else: false
+  function ifExpressionStatement() {
+    const condition = expression();
+    consume(COMMA, 'Expect `,` after if condition.');
+    consume(DO, 'Expect `do` after if expression condition.');
+    consume(COLON, 'Expect `:` after do.');
+
+    const thenBranch = expression();
+    let elseBranch: Expr | undefined;
+    if (match(COMMA)) {
+      consume(ELSE, 'Expect `do` after if statement else clause.');
+      consume(COLON, 'Expect `:` after else.');
+      elseBranch = expression();
+    }
+
+    !isAtEnd() && consume(NEW_LINE, 'Expect `\n` after if expression statement.');
+
+    return createIfExprStmt(condition, thenBranch, elseBranch);
+  }
+
+  function ifStatement(): Stmt {
+    consume(LEFT_PAREN, 'Expect `(` after if.');
+    const condition = expression();
+    consume(RIGHT_PAREN, 'Expect `)` after if condition.');
+
+    const thenBranch = statement();
+    let elseBranch: Stmt | undefined;
+    if (match(ELSE)) {
+      elseBranch = statement();
+    }
+
+    return createIfStmt(condition, thenBranch, elseBranch);
   }
 
   function statement() {
-    if (match(LEFT_BRACE)) return createBlock(block());
+    if (match(LEFT_BRACE)) return block();
+    if (match(IF)) return check(LEFT_PAREN) ? ifStatement() : ifExpressionStatement();
     return expressionStatement();
   }
 
@@ -203,7 +247,7 @@ export function parser(tokens: Token[], captureError: CaptureError) {
       initializer = expression();
     }
 
-    consume(NEW_LINE, 'Expect a `\n` after a variable declaration.');
+    !isAtEnd() && consume(NEW_LINE, 'Expect a `\n` after a variable declaration.');
     return createLetDecl(name, initializer);
   }
 

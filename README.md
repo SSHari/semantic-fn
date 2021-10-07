@@ -41,6 +41,7 @@ The grammar specified by `semantic-fn` is designed to be as close to JavaScript 
   - **Expression**: Any expression followed by a new line which signifies the end of the expression.
   - **Declarations:** A special statement which provides a way to store state in a local variable which can be reassigned. The variable created adheres to standard JavaScript scoping rules.
   - **Block:** A series of statements with a unique environment and variable scope.
+  - **If:** A standard if / else statement to allow for conditional logic.
 
 #### Special Considerations
 
@@ -65,8 +66,11 @@ declaration → letDecl | statement ;
 letDecl → "let" IDENTIFIER ( "=" expression )? "\n" ;
 statement → exprStmt | block ;
 exprStmt → expression "\n" ;
+ifStmt → "if" "(" expression ")" statement ( "else" statement )?
+       | "if" expression "," "do:" expression ( "\n", "," "else:" expression "\n" ) ;
 block → "{" declaration* "}" ;
-expression → equality ;
+expression → assignment ;
+assignment → IDENTIFIER "=" assignment | equality ;
 equality → comparison ( ( "!=", "!==", "==", "===" ) comparison )* ;
 comparison → term ( ( ">", ">=", "<", "<=" ) term )* ;
 term → factor ( ( "-", "+" ) factor )* ;
