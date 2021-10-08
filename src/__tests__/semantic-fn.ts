@@ -1,27 +1,26 @@
 import { buildSemanticFn } from '../semantic-fn';
 
-/*
-  ${'person.age > 20'}      | ${[{ age: 21 }]}              | ${{ argNames: ['person'] }}         | ${true}
-  ${'person.age + 20'}      | ${[{ age: 20 }]}              | ${{ argNames: ['person'] }}         | ${40}
-  ${'toString person.age'}  | ${[{ age: 20 }]}              | ${{ argNames: ['person'] }}         | ${'20'}
-  ${'person.name === name'} | ${[{ name: 'Jack' }, 'Jack']} | ${{ argNames: ['person', 'name'] }} | ${true}
-  */
 it.each`
-  descriptor                           | args        | options                   | expected
-  ${'1 + 5 === 6'}                     | ${[]}       | ${{}}                     | ${true}
-  ${'10 + 10 * 2'}                     | ${[]}       | ${{}}                     | ${30}
-  ${'10 - 5 - 3'}                      | ${[]}       | ${{}}                     | ${2}
-  ${'true'}                            | ${[]}       | ${{}}                     | ${true}
-  ${'false'}                           | ${[]}       | ${{}}                     | ${false}
-  ${'null'}                            | ${[]}       | ${{}}                     | ${null}
-  ${'undefined'}                       | ${[]}       | ${{}}                     | ${undefined}
-  ${'toBool 0'}                        | ${[]}       | ${{ argNames: [] }}       | ${false}
-  ${'name === "Jack"'}                 | ${['Jack']} | ${{ argNames: ['name'] }} | ${true}
-  ${'age == "20"'}                     | ${[20]}     | ${{ argNames: ['age'] }}  | ${true}
-  ${'true and "short-circuit-check"'}  | ${[]}       | ${{}}                     | ${'short-circuit-check'}
-  ${'true or "short-circuit-check"'}   | ${[]}       | ${{}}                     | ${true}
-  ${'false and "short-circuit-check"'} | ${[]}       | ${{}}                     | ${false}
-  ${'false or "short-circuit-check"'}  | ${[]}       | ${{}}                     | ${'short-circuit-check'}
+  descriptor                     | args                          | options                             | expected
+  ${'1 + 5 === 6'}               | ${[]}                         | ${{}}                               | ${true}
+  ${'10 + 10 * 2'}               | ${[]}                         | ${{}}                               | ${30}
+  ${'10 - 5 - 3'}                | ${[]}                         | ${{}}                               | ${2}
+  ${'true'}                      | ${[]}                         | ${{}}                               | ${true}
+  ${'false'}                     | ${[]}                         | ${{}}                               | ${false}
+  ${'null'}                      | ${[]}                         | ${{}}                               | ${null}
+  ${'undefined'}                 | ${[]}                         | ${{}}                               | ${undefined}
+  ${'toBool 0'}                  | ${[]}                         | ${{ argNames: [] }}                 | ${false}
+  ${'name === "Jack"'}           | ${['Jack']}                   | ${{ argNames: ['name'] }}           | ${true}
+  ${'age == "20"'}               | ${[20]}                       | ${{ argNames: ['age'] }}            | ${true}
+  ${'true and "short-circuit"'}  | ${[]}                         | ${{}}                               | ${'short-circuit'}
+  ${'true or "short-circuit"'}   | ${[]}                         | ${{}}                               | ${true}
+  ${'false and "short-circuit"'} | ${[]}                         | ${{}}                               | ${false}
+  ${'false or "short-circuit"'}  | ${[]}                         | ${{}}                               | ${'short-circuit'}
+  ${'person.age > 20'}           | ${[{ age: 21 }]}              | ${{ argNames: ['person'] }}         | ${true}
+  ${'person.age + 20'}           | ${[{ age: 20 }]}              | ${{ argNames: ['person'] }}         | ${40}
+  ${'toString person.age'}       | ${[{ age: 20 }]}              | ${{ argNames: ['person'] }}         | ${'20'}
+  ${'person.name === name'}      | ${[{ name: 'Jack' }, 'Jack']} | ${{ argNames: ['person', 'name'] }} | ${true}
+  ${'person.info.age'}           | ${[{ info: { age: 100 } }]}   | ${{ argNames: ['person'] }}         | ${100}
 `('should return a function that evaluates `$descriptor` correctly', ({ descriptor, args, options, expected }) => {
   const fn = buildSemanticFn(descriptor, options);
   expect(fn(...args)).toBe(expected);
@@ -58,6 +57,22 @@ it('should handle global -> function arg -> block scopes correctly', () => {
   );
 
   expect(fn(50, 200)).toBe(166);
+});
+
+it('should not allow mutation of global and function args', () => {
+  const fn = buildSemanticFn(
+    `
+    let a = 1
+    let b = a = 3
+    let c = person.age = modifier = 1
+    let d = modifier = person.age = 1
+
+    a + b + c + d
+    `,
+    { argNames: ['person'], scope: { modifier: 4 } },
+  );
+
+  expect(fn({ age: 100 })).toBe(110);
 });
 
 it.each`

@@ -31,11 +31,14 @@ export function evaluateTree({ captureError, enclosing }: EvaluateTree): TreeWal
   // Block statements will change the execution environment
   let environment = buildEnvironment({ captureError, enclosing, readonly: false });
 
+  // Keep track of the last retrieved variable's readonly
+  // status to avoid object mutation via the set expression.
+  let lastVarReadOnly: boolean;
+
   return {
     Assignment: (expr, evaluate) => {
       const value = evaluate(expr.value);
-      environment.assign(expr.name, value);
-      return value;
+      return environment.assign(expr.name, value);
     },
     Binary: (expr, evaluate) => {
       const left = evaluate(expr.left);
@@ -75,11 +78,38 @@ export function evaluateTree({ captureError, enclosing }: EvaluateTree): TreeWal
       // This should not be reachable
       return null;
     },
+    Get: (expr, evaluate) => {
+      const object = evaluate(expr.object);
+
+      try {
+        return object[expr.name.lexeme];
+      } catch {
+        captureError(expr.name, 'Property does not exist.');
+      }
+    },
     Grouping: (expr, evaluate) => {
       return evaluate(expr.expression);
     },
     Literal: (expr) => {
       return expr.token.literal;
+    },
+    Set: (expr, evaluate) => {
+      const object = evaluate(expr.object);
+
+      if (lastVarReadOnly) {
+        captureError(expr.name, 'Trying to update a readonly variable.');
+
+        // Return the current value
+        return object[expr.name.lexeme];
+      } else {
+        try {
+          const value = evaluate(expr.value);
+          object[expr.name.lexeme] = value;
+          return value;
+        } catch {
+          captureError(expr.name, 'Property does not exist.');
+        }
+      }
     },
     Unary: (expr, evaluate) => {
       const right = evaluate(expr.right);
@@ -97,7 +127,10 @@ export function evaluateTree({ captureError, enclosing }: EvaluateTree): TreeWal
       return null;
     },
     Variable: (expr) => {
-      return environment.get(expr.name);
+      const { value, readonly } = environment.get(expr.name);
+
+      lastVarReadOnly = readonly;
+      return value;
     },
     Block: (stmt, _evaluate, execute) => {
       const previous = environment;

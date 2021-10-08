@@ -1,4 +1,14 @@
-import { Expr, createAssignment, createBinary, createGrouping, createLiteral, createUnary, createVariable } from './expressions';
+import {
+  Expr,
+  createAssignment,
+  createBinary,
+  createGet,
+  createGrouping,
+  createLiteral,
+  createSet,
+  createUnary,
+  createVariable,
+} from './expressions';
 import { Stmt, LetDecl, createBlock, createExprStmt, createIfExprStmt, createIfStmt, createLetDecl } from './statements';
 import { Token, TokenString, TokenType } from './tokens';
 import { CaptureError } from './errors';
@@ -15,6 +25,7 @@ const {
   STAR,
   COMMA,
   COLON,
+  DOT,
 
   // 1 - 3 character tokens
   BANG,
@@ -144,6 +155,21 @@ export function parser(tokens: Token[], captureError: CaptureError) {
     throw new Error('No match found');
   }
 
+  function get() {
+    let expr: Expr = primary();
+
+    while (true) {
+      if (match(DOT)) {
+        const name = consume(IDENTIFIER, 'Expect a property name after `.`.');
+        expr = createGet(expr, name);
+      } else {
+        break;
+      }
+    }
+
+    return expr;
+  }
+
   function unary(): Expr {
     if (match(BANG, MINUS, MODIFIER)) {
       const operator = previous();
@@ -151,7 +177,7 @@ export function parser(tokens: Token[], captureError: CaptureError) {
       return createUnary(operator, right);
     }
 
-    return primary();
+    return get();
   }
 
   const factor = buildBinaryOperatorFn([SLASH, STAR], unary);
@@ -168,10 +194,8 @@ export function parser(tokens: Token[], captureError: CaptureError) {
       const equals = previous();
       const value = assignment();
 
-      if (expr.type === 'Variable') {
-        const name = expr.name;
-        return createAssignment(name, value);
-      }
+      if (expr.type === 'Variable') return createAssignment(expr.name, value);
+      else if (expr.type === 'Get') return createSet(expr.object, expr.name, value);
 
       error(equals, 'Invalid assignment target.');
     }

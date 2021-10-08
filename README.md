@@ -73,7 +73,7 @@ ifStmt        → "if" "(" expression ")" statement ( "else" statement )?
                 | "if" expression "," "do:" expression ( "\n", "," "else:" expression "\n" ) ;
 block         → "{" declaration* "}" ;
 expression    → assignment ;
-assignment    → IDENTIFIER "=" assignment
+assignment    → ( call "." )? IDENTIFIER "=" assignment
                 | logic_or ;
 logic_or      → logic_and ( "or" logic_and)* ;
 logic_and     → equality ( "and" equality)* ;
@@ -82,7 +82,8 @@ comparison    → term ( ( ">", ">=", "<", "<=" ) term )* ;
 term          → factor ( ( "-", "+" ) factor )* ;
 factor        → unary ( ( "/", "*" ) unary )* ;
 unary         → ( "!", "-", MODIFIER ) unary
-                | primary ;
+                | get ;
+get           → primary ( "." IDENTIFIER )* ;
 primary       → NUMBER
                 | STRING
                 | IDENTIFIER
