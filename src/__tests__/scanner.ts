@@ -46,12 +46,12 @@ it('should scan the source and return a list of tokens correctly', () => {
     `
     (1 - 2 * 3) >= 4 / 2
     or
-    toBool undefined
+    toBool undefined === %{}
   `,
     errorTracker.captureCompileError,
   );
 
-  expect(tokensTwo).toHaveLength(19);
+  expect(tokensTwo).toHaveLength(23);
   expect(tokensTwo).toEqual([
     buildTokenObj('NEW_LINE', '\n', undefined, 1),
     buildTokenObj('LEFT_PAREN', '(', undefined, 2),
@@ -70,6 +70,10 @@ it('should scan the source and return a list of tokens correctly', () => {
     buildTokenObj('NEW_LINE', '\n', undefined, 3),
     buildTokenObj('MODIFIER', 'toBool', undefined, 4),
     buildTokenObj('UNDEFINED', 'undefined', undefined, 4),
+    buildTokenObj('EQUAL_EQUAL_EQUAL', '===', undefined, 4),
+    buildTokenObj('PERCENT', '%', undefined, 4),
+    buildTokenObj('LEFT_BRACE', '{', undefined, 4),
+    buildTokenObj('RIGHT_BRACE', '}', undefined, 4),
     buildTokenObj('NEW_LINE', '\n', undefined, 4),
     buildTokenObj('EOT', 'EOT'),
   ]);

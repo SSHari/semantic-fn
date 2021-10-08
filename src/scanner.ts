@@ -13,6 +13,7 @@ const {
   LEFT_PAREN,
   RIGHT_PAREN,
   MINUS,
+  PERCENT,
   PLUS,
   SLASH,
   STAR,
@@ -174,6 +175,9 @@ export function scanner(source: string, captureError: CaptureError) {
         break;
       case '-':
         addToken(MINUS);
+        break;
+      case '%':
+        addToken(PERCENT);
         break;
       case '+':
         addToken(PLUS);

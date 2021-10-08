@@ -10,6 +10,7 @@ const TokenStrings = [
   'LEFT_PAREN',
   'RIGHT_PAREN',
   'MINUS',
+  'PERCENT',
   'PLUS',
   'SLASH',
   'STAR',

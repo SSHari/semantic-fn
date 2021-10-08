@@ -90,3 +90,18 @@ it.each`
   const fn = buildSemanticFn(descriptor);
   expect(fn()).toBe(expected);
 });
+
+it('should handle objects correctly', () => {
+  const fn = buildSemanticFn(`
+    let obj = %{
+      a: 1,
+      b: %{
+        c: 3
+      }
+    }
+
+    obj.b.c = 5
+    obj
+  `);
+  expect(fn()).toEqual({ a: 1, b: { c: 5 } });
+});

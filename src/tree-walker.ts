@@ -1,4 +1,4 @@
-import { Assignment, Binary, Get, Grouping, Literal, Set, Unary, Variable, Expr } from './expressions';
+import { Assignment, Binary, Get, Grouping, Literal, ObjExpr, Set, Unary, Variable, Expr } from './expressions';
 import { Block, ExprStmt, IfExprStmt, IfStmt, LetDecl, Stmt } from './statements';
 
 type Evaluate = (expr: Expr) => any;
@@ -11,6 +11,7 @@ export type TreeWalkerFnMap = {
   Get: (expr: Get, evaluate: Evaluate) => any;
   Grouping: (expr: Grouping, evaluate: Evaluate) => any;
   Literal: (expr: Literal, evaluate: Evaluate) => any;
+  ObjExpr: (stmt: ObjExpr, evaluate: Evaluate) => any;
   Set: (expr: Set, evaluate: Evaluate) => any;
   Unary: (expr: Unary, evaluate: Evaluate) => any;
   Variable: (expr: Variable, evaluate: Evaluate) => any;
@@ -24,7 +25,7 @@ export type TreeWalkerFnMap = {
 };
 
 export function walkTree(
-  { Assignment, Binary, Get, Grouping, Literal, Set, Unary, Variable, Block, ExprStmt, IfExprStmt, IfStmt, LetDecl }: TreeWalkerFnMap,
+  { Assignment, Binary, Get, Grouping, Literal, ObjExpr, Set, Unary, Variable, Block, ExprStmt, IfExprStmt, IfStmt, LetDecl }: TreeWalkerFnMap,
   statements: Stmt[],
 ) {
   function evaluate(expr: Expr) {
@@ -39,6 +40,8 @@ export function walkTree(
         return Grouping(expr, evaluate);
       case 'Literal':
         return Literal(expr, evaluate);
+      case 'ObjExpr':
+        return ObjExpr(expr, evaluate);
       case 'Set':
         return Set(expr, evaluate);
       case 'Unary':

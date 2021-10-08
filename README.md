@@ -66,12 +66,12 @@ declaration   → letDecl
                 | statement ;
 letDecl       → "let" IDENTIFIER ( "=" expression )? "\n" ;
 statement     → exprStmt
-                | ifStmt
-                | block ;
+                | block
+                | ifStmt ;
 exprStmt      → expression "\n" ;
+block         → "{" declaration* "}" ;
 ifStmt        → "if" "(" expression ")" statement ( "else" statement )?
                 | "if" expression "," "do:" expression ( "\n", "," "else:" expression "\n" ) ;
-block         → "{" declaration* "}" ;
 expression    → assignment ;
 assignment    → ( call "." )? IDENTIFIER "=" assignment
                 | logic_or ;
@@ -91,5 +91,6 @@ primary       → NUMBER
                 | "false"
                 | "undefined"
                 | "null"
+                | "%{" ( IDENTIFIER ":" expression ","? )+ "}"
                 | "(" expression ")" ;
 ```

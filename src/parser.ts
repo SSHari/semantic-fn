@@ -5,6 +5,7 @@ import {
   createGet,
   createGrouping,
   createLiteral,
+  createObjExpr,
   createSet,
   createUnary,
   createVariable,
@@ -15,17 +16,18 @@ import { CaptureError } from './errors';
 
 const {
   // Single character tokens
+  COLON,
+  COMMA,
+  DOT,
   LEFT_BRACE,
   RIGHT_BRACE,
   LEFT_PAREN,
   RIGHT_PAREN,
   MINUS,
+  PERCENT,
   PLUS,
   SLASH,
   STAR,
-  COMMA,
-  COLON,
-  DOT,
 
   // 1 - 3 character tokens
   BANG,
@@ -138,6 +140,26 @@ export function parser(tokens: Token[], captureError: CaptureError) {
   }
 
   // Expression Grammar Symbol Builders
+  function object() {
+    consume(LEFT_BRACE, 'Expect `{` to start object');
+    const properties: { name: Token; value: Expr }[] = [];
+
+    while (!check(RIGHT_BRACE) && !isAtEnd()) {
+      while (check(NEW_LINE)) advance();
+
+      const name = consume(IDENTIFIER, 'Expected a property name.');
+      consume(COLON, 'Expected a `:` after a property name.');
+      const value = expression();
+      properties.push({ name, value });
+
+      while (check(NEW_LINE)) advance();
+      if (!check(RIGHT_BRACE)) consume(COMMA, 'Expect `,` between object properties.');
+    }
+
+    consume(RIGHT_BRACE, 'Expect `}` after object.');
+    return createObjExpr(properties);
+  }
+
   function primary() {
     if (match(FALSE)) return createLiteral({ ...previous(), literal: false });
     if (match(TRUE)) return createLiteral({ ...previous(), literal: true });
@@ -145,6 +167,7 @@ export function parser(tokens: Token[], captureError: CaptureError) {
     if (match(UNDEFINED)) return createLiteral({ ...previous(), literal: undefined });
     if (match(NUMBER, STRING)) return createLiteral(previous());
     if (match(IDENTIFIER)) return createVariable(previous());
+    if (match(PERCENT)) return object();
 
     if (match(LEFT_PAREN)) {
       const expr = expression();
@@ -210,7 +233,7 @@ export function parser(tokens: Token[], captureError: CaptureError) {
   // Statement Grammar Symbol Builders
   function expressionStatement() {
     const expr = expression();
-    !isAtEnd() && consume(NEW_LINE, 'Expect a `\n` after an expression.');
+    !isAtEnd() && consume(NEW_LINE, 'Expect a `\\n` after an expression.');
     return createExprStmt(expr);
   }
 
@@ -242,7 +265,7 @@ export function parser(tokens: Token[], captureError: CaptureError) {
       elseBranch = expression();
     }
 
-    !isAtEnd() && consume(NEW_LINE, 'Expect `\n` after if expression statement.');
+    !isAtEnd() && consume(NEW_LINE, 'Expect `\\n` after if expression statement.');
 
     return createIfExprStmt(condition, thenBranch, elseBranch);
   }
@@ -282,7 +305,6 @@ export function parser(tokens: Token[], captureError: CaptureError) {
   function declaration() {
     try {
       if (match(LET)) return letDeclaration();
-
       return statement();
     } catch (error) {
       // If there's an error in the statement then skip to the next logical point

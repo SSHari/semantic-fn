@@ -93,6 +93,15 @@ export function evaluateTree({ captureError, enclosing }: EvaluateTree): TreeWal
     Literal: (expr) => {
       return expr.token.literal;
     },
+    ObjExpr: (expr, evaluate) => {
+      const obj: Record<string, any> = {};
+
+      for (const property of expr.properties) {
+        obj[property.name.lexeme] = evaluate(property.value);
+      }
+
+      return obj;
+    },
     Set: (expr, evaluate) => {
       const object = evaluate(expr.object);
 

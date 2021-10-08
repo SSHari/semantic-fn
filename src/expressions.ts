@@ -5,11 +5,12 @@ export type Binary = { type: 'Binary'; left: Expr; operator: Token; right: Expr 
 export type Get = { type: 'Get'; object: Expr; name: Token };
 export type Grouping = { type: 'Grouping'; expression: Expr };
 export type Literal = { type: 'Literal'; token: Token };
+export type ObjExpr = { type: 'ObjExpr'; properties: { name: Token; value: Expr }[] };
 export type Set = { type: 'Set'; object: Expr; name: Token; value: Expr };
 export type Unary = { type: 'Unary'; operator: Token; right: Expr };
 export type Variable = { type: 'Variable'; name: Token };
 
-export type Expr = Assignment | Binary | Get | Grouping | Literal | Set | Unary | Variable;
+export type Expr = Assignment | Binary | Get | Grouping | Literal | ObjExpr | Set | Unary | Variable;
 
 export function createAssignment(name: Token, value: Expr): Assignment {
   return { type: 'Assignment', name, value };
@@ -29,6 +30,10 @@ export function createGrouping(expression: Expr): Grouping {
 
 export function createLiteral(token: Token): Literal {
   return { type: 'Literal', token };
+}
+
+export function createObjExpr(properties: { name: Token; value: Expr }[]): ObjExpr {
+  return { type: 'ObjExpr', properties };
 }
 
 export function createSet(object: Expr, name: Token, value: Expr): Set {
