@@ -1,4 +1,4 @@
-import { Assignment, Binary, Get, Grouping, Literal, ObjExpr, Set, Unary, Variable, Expr } from './expressions';
+import { ArrayExpr, Assignment, Binary, Get, Grouping, Literal, ObjExpr, Set, Unary, Variable, Expr } from './expressions';
 import { Block, ExprStmt, IfExprStmt, IfStmt, LetDecl, Stmt } from './statements';
 
 type Evaluate = (expr: Expr) => any;
@@ -6,6 +6,7 @@ type Execute = (stmt: Stmt) => any;
 
 export type TreeWalkerFnMap = {
   // Expressions
+  ArrayExpr: (expr: ArrayExpr, evaluate: Evaluate) => any;
   Assignment: (expr: Assignment, evaluate: Evaluate) => any;
   Binary: (expr: Binary, evaluate: Evaluate) => any;
   Get: (expr: Get, evaluate: Evaluate) => any;
@@ -25,11 +26,29 @@ export type TreeWalkerFnMap = {
 };
 
 export function walkTree(
-  { Assignment, Binary, Get, Grouping, Literal, ObjExpr, Set, Unary, Variable, Block, ExprStmt, IfExprStmt, IfStmt, LetDecl }: TreeWalkerFnMap,
+  {
+    ArrayExpr,
+    Assignment,
+    Binary,
+    Get,
+    Grouping,
+    Literal,
+    ObjExpr,
+    Set,
+    Unary,
+    Variable,
+    Block,
+    ExprStmt,
+    IfExprStmt,
+    IfStmt,
+    LetDecl,
+  }: TreeWalkerFnMap,
   statements: Stmt[],
 ) {
   function evaluate(expr: Expr) {
     switch (expr.type) {
+      case 'ArrayExpr':
+        return ArrayExpr(expr, evaluate);
       case 'Assignment':
         return Assignment(expr, evaluate);
       case 'Binary':

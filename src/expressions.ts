@@ -1,5 +1,6 @@
 import { Token } from './tokens';
 
+export type ArrayExpr = { type: 'ArrayExpr'; values: Expr[] };
 export type Assignment = { type: 'Assignment'; name: Token; value: Expr };
 export type Binary = { type: 'Binary'; left: Expr; operator: Token; right: Expr };
 export type Get = { type: 'Get'; object: Expr; name: Token };
@@ -10,7 +11,11 @@ export type Set = { type: 'Set'; object: Expr; name: Token; value: Expr };
 export type Unary = { type: 'Unary'; operator: Token; right: Expr };
 export type Variable = { type: 'Variable'; name: Token };
 
-export type Expr = Assignment | Binary | Get | Grouping | Literal | ObjExpr | Set | Unary | Variable;
+export type Expr = ArrayExpr | Assignment | Binary | Get | Grouping | Literal | ObjExpr | Set | Unary | Variable;
+
+export function createArrayExpr(values: Expr[]): ArrayExpr {
+  return { type: 'ArrayExpr', values };
+}
 
 export function createAssignment(name: Token, value: Expr): Assignment {
   return { type: 'Assignment', name, value };

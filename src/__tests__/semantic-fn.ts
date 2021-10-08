@@ -105,3 +105,14 @@ it('should handle objects correctly', () => {
   `);
   expect(fn()).toEqual({ a: 1, b: { c: 5 } });
 });
+
+it('should handle arrays correctly', () => {
+  const fn = buildSemanticFn(`
+    let arr = [1, 1 + 2, [3, 4], %{ a: 1 }]
+    arr[0] = 4
+    arr[2][1] = 8
+    arr[3].a = 2
+    arr
+  `);
+  expect(fn()).toEqual([4, 3, [3, 8], { a: 2 }]);
+});

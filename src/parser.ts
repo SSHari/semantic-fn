@@ -1,5 +1,6 @@
 import {
   Expr,
+  createArrayExpr,
   createAssignment,
   createBinary,
   createGet,
@@ -21,6 +22,8 @@ const {
   DOT,
   LEFT_BRACE,
   RIGHT_BRACE,
+  LEFT_BRACKET,
+  RIGHT_BRACKET,
   LEFT_PAREN,
   RIGHT_PAREN,
   MINUS,
@@ -160,6 +163,21 @@ export function parser(tokens: Token[], captureError: CaptureError) {
     return createObjExpr(properties);
   }
 
+  function array() {
+    const values: Expr[] = [];
+
+    while (!check(RIGHT_BRACKET) && !isAtEnd()) {
+      while (check(NEW_LINE)) advance();
+      values.push(expression());
+
+      while (check(NEW_LINE)) advance();
+      if (!check(RIGHT_BRACKET)) consume(COMMA, 'Expect `,` between array values.');
+    }
+
+    consume(RIGHT_BRACKET, 'Expect `]` after array.');
+    return createArrayExpr(values);
+  }
+
   function primary() {
     if (match(FALSE)) return createLiteral({ ...previous(), literal: false });
     if (match(TRUE)) return createLiteral({ ...previous(), literal: true });
@@ -168,6 +186,7 @@ export function parser(tokens: Token[], captureError: CaptureError) {
     if (match(NUMBER, STRING)) return createLiteral(previous());
     if (match(IDENTIFIER)) return createVariable(previous());
     if (match(PERCENT)) return object();
+    if (match(LEFT_BRACKET)) return array();
 
     if (match(LEFT_PAREN)) {
       const expr = expression();
@@ -185,6 +204,10 @@ export function parser(tokens: Token[], captureError: CaptureError) {
       if (match(DOT)) {
         const name = consume(IDENTIFIER, 'Expect a property name after `.`.');
         expr = createGet(expr, name);
+      } else if (match(LEFT_BRACKET)) {
+        if (!check(NUMBER) && !check(STRING) && !check(IDENTIFIER)) error(peek(), 'Expect a number, string or variable to access via `[<>]`.');
+        expr = createGet(expr, advance());
+        consume(RIGHT_BRACKET, 'Expect `]` after access.');
       } else {
         break;
       }

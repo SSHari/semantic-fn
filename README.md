@@ -34,6 +34,8 @@ The grammar specified by `semantic-fn` is designed to be as close to JavaScript 
 
 - **Literals:** Numbers, strings, Booleans, undefined and null.
 - **Identifier:** A special type of literal which is either a reserved keyword or a variable name.
+- **Collections:** Standard JS objects and arrays.
+  - An object in `semantic-fn` is prefixed with a `%` (e.g. `%{ property: 'value' }`)
 - **Unary expressions:** A prefix `!` which performs a logical not and `-` to negate a number and any `MODIFIER` which modifies the value after it.
 - **Binary expressions:** The following infix arithmetic operators (+, -, \*, /) and the following logical operators (==, ===, !=, !==, <, <=, >, >=, and, or). These operators behave the same way you would expect them to behave in JavaScript.
 - **Parentheses:** A way to group other expressions to show desired precedence.
@@ -83,7 +85,7 @@ term          → factor ( ( "-", "+" ) factor )* ;
 factor        → unary ( ( "/", "*" ) unary )* ;
 unary         → ( "!", "-", MODIFIER ) unary
                 | get ;
-get           → primary ( "." IDENTIFIER )* ;
+get           → primary ( "." IDENTIFIER, "[" ( NUMBER, STRING, IDENTIFIER ) "]" )* ;
 primary       → NUMBER
                 | STRING
                 | IDENTIFIER
@@ -91,6 +93,7 @@ primary       → NUMBER
                 | "false"
                 | "undefined"
                 | "null"
-                | "%{" ( IDENTIFIER ":" expression ","? )+ "}"
+                | "%{" ( IDENTIFIER ":" expression ","? )* "}"
+                | "[" ( expression ","? )* "]"
                 | "(" expression ")" ;
 ```

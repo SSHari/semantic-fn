@@ -36,6 +36,9 @@ export function evaluateTree({ captureError, enclosing }: EvaluateTree): TreeWal
   let lastVarReadOnly: boolean;
 
   return {
+    ArrayExpr: (expr, evaluate) => {
+      return expr.values.map(evaluate);
+    },
     Assignment: (expr, evaluate) => {
       const value = evaluate(expr.value);
       return environment.assign(expr.name, value);
